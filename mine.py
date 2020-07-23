@@ -1,6 +1,5 @@
-import alphavantage
 import config
-from vaderSentiment import SentimentIntensityAnalyzer
+import json
 import csv
 import praw
 import time
@@ -9,7 +8,9 @@ import logging
 import sys
 import yfinance as yf
 from string import punctuation
+
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
+from vaderSentiment import SentimentIntensityAnalyzer
 
 
 # contains client_id and client_secret used to connect
@@ -18,8 +19,8 @@ file1 = open("myfile.txt", "w")
 
 # sys.stdout = file1
 
-TIME_PERIOD = 60 * 60 * 24 * 1
-# TIME_PERIOD = 60 * 20
+# TIME_PERIOD = 60 * 60 * 24 * 1
+TIME_PERIOD = 60 * 20 
 
 SUBREDDIT = 'wallstreetbets'
 STOCK_SPECIFIC_METION_WEIGHT = 5
@@ -80,12 +81,27 @@ def analyze_text(text):
 
         if (len(word) < 3):
             continue
-        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha():
-            try:
-                yf.Ticker(word).cashflow
-            except:
-                # print("THIS AINT A WORD DUMBASS")
-                continue
+        with open("cache.txt", "r+") as file:
+            data = json.load(file)
+            if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and word.upper() not in data:
+                try:
+                    company = yf.Ticker(word).info["longName"]
+                # with open("cache.json", "r+") as file:
+                    add = {word : company}
+                    data.update(add)
+                    file.seek(0)
+                    json.dump(data,file)
+                    print(company)
+                except:
+                    print("THIS AINT A WORD DUMBASS")
+                    continue
+                if word in ticker_dict:
+                    ticker_dict[word].count += 1
+                    ticker_dict[word].bodies.append(text)
+                else:
+                    ticker_dict[word] = Ticker(word)
+                    ticker_dict[word].count = 1
+                    ticker_dict[word].bodies.append(text)
 
         # Used to speed up the process, so I don't have to
             # print(stocks[word].ticker)
@@ -95,13 +111,7 @@ def analyze_text(text):
             # print(stocks[word].count)
             # print(stocks[word].bodies)
 
-            if word in ticker_dict:
-                ticker_dict[word].count += 1
-                ticker_dict[word].bodies.append(text)
-            else:
-                ticker_dict[word] = Ticker(word)
-                ticker_dict[word].count = 1
-                ticker_dict[word].bodies.append(text)
+            
     return ticker_dict
 
 
@@ -137,7 +147,6 @@ def crawl_subreddit(subreddit):
 
 
 crawl_subreddit("wallstreetbets")
-
 count = {}
 for ticker in ticker_dict:
     count[ticker] = ticker_dict[ticker].count

@@ -1,0 +1,1 @@
+{"TSLA": "Tesla, Inc.", "SPY": "SPDR S&P 500 ETF Trust", "AAPL": "Apple Inc.", "TQQQ": "ProShares UltraPro QQQ", "TECL": "Direxion Daily Technology Bull 3X Shares", "BAC": "Bank of America Corporation", "KEYS": "Keysight Technologies, Inc.", "AXP": "American Express Company"}
