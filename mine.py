@@ -20,7 +20,7 @@ file1 = open("myfile.txt", "w")
 # sys.stdout = file1
 
 # TIME_PERIOD = 60 * 60 * 24 * 1
-TIME_PERIOD = 60 * 20 
+TIME_PERIOD = 60 * 60 * 6
 
 SUBREDDIT = 'wallstreetbets'
 STOCK_SPECIFIC_METION_WEIGHT = 5
@@ -81,37 +81,36 @@ def analyze_text(text):
 
         if (len(word) < 3):
             continue
-        with open("cache.txt", "r+") as file:
-            data = json.load(file)
-            if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and word.upper() not in data:
-                try:
-                    company = yf.Ticker(word).info["longName"]
-                # with open("cache.json", "r+") as file:
-                    add = {word : company}
-                    data.update(add)
-                    file.seek(0)
-                    json.dump(data,file)
-                    print(company)
-                except:
-                    print("THIS AINT A WORD DUMBASS")
-                    continue
-                if word in ticker_dict:
-                    ticker_dict[word].count += 1
-                    ticker_dict[word].bodies.append(text)
-                else:
-                    ticker_dict[word] = Ticker(word)
-                    ticker_dict[word].count = 1
-                    ticker_dict[word].bodies.append(text)
 
-        # Used to speed up the process, so I don't have to
-            # print(stocks[word].ticker)
-            # stocks[word].bodies.append(text)
-            # stocks[word].count = stocks[word].count + 1
-            # print("FUCK YEAHHHH")
-            # print(stocks[word].count)
-            # print(stocks[word].bodies)
-
-            
+        #Does word fit the ticker criteria
+        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha():
+            with open("cache.json") as file, open("false-positives.json") as file2:
+                data = json.load(file)
+                data2 = json.load(file2)
+                #Checks to see if the ticker has been cached.
+                if (word not in data):
+                    try: #Add ticker to cache 
+                        company = yf.Ticker(word).info["longName"]
+                        add = {word : company}
+                        data.update(add)
+                        with open("cache.json", "w") as f:
+                            json.dump(data,f)
+                        print(company) #TESTING
+                    except:
+                        if(word not in data2):
+                            add = {word : "LINE BREAK"}
+                            data2.update(add)
+                            with open("false-positives.json", "w") as f:
+                                json.dump(data2,f)
+                        # print("THIS AINT A WORD DUMBASS") #TESTING
+                        continue
+            if word in ticker_dict:
+                ticker_dict[word].count += 1
+                ticker_dict[word].bodies.append(text)
+            else:
+                ticker_dict[word] = Ticker(word)
+                ticker_dict[word].count = 1
+                ticker_dict[word].bodies.append(text)           
     return ticker_dict
 
 
