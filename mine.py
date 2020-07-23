@@ -18,7 +18,6 @@ from vaderSentiment import SentimentIntensityAnalyzer
 file1 = open("myfile.txt", "w")
 
 # sys.stdout = file1
-
 # TIME_PERIOD = 60 * 60 * 24 * 1
 TIME_PERIOD = 60 * 60 * 6
 
@@ -88,7 +87,8 @@ def analyze_text(text):
                 data = json.load(file)
                 data2 = json.load(file2)
                 #Checks to see if the ticker has been cached.
-                if (word not in data):
+                if (word not in data) and (word not in data2):
+                    #HERE WHY DOES NKLA NOT WORK
                     try: #Add ticker to cache 
                         company = yf.Ticker(word).info["longName"]
                         add = {word : company}
@@ -96,18 +96,19 @@ def analyze_text(text):
                         with open("cache.json", "w") as f:
                             json.dump(data,f)
                         print(company) #TESTING
-                    except:
+                    except Exception as e:
+                        print(e, word)
                         if(word not in data2):
-                            add = {word : "LINE BREAK"}
+                            add = {word : str(e)}
                             data2.update(add)
                             with open("false-positives.json", "w") as f:
                                 json.dump(data2,f)
                         # print("THIS AINT A WORD DUMBASS") #TESTING
                         continue
-            if word in ticker_dict:
+            if (word in data) and (word in ticker_dict):
                 ticker_dict[word].count += 1
                 ticker_dict[word].bodies.append(text)
-            else:
+            elif word in data:
                 ticker_dict[word] = Ticker(word)
                 ticker_dict[word].count = 1
                 ticker_dict[word].bodies.append(text)           
@@ -141,7 +142,8 @@ def crawl_subreddit(subreddit):
         # Parses post comments
         submission.comments.replace_more(limit=None, threshold=0)
         for comment in submission.comments.list():
-            # print("\t", comment.id)
+            #
+            #  print("\t", comment.id)
             ticker_dict = analyze_text(comment.body)
 
 
