@@ -12,17 +12,8 @@ from string import punctuation
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
-<<<<<<< HEAD
-
-TIME_PERIOD = 60 * 60 * 6 #How far back to scrape in UNIX time
-SUBREDDIT = 'wallstreetbets'
-STOCK_SPECIFIC_METION_WEIGHT = 5
-STOCK_POST_MENTION_WEIGHT = 3
-STOCK_DEFAULT_WEIGHT = 1
-=======
 TIME_PERIOD = 60 * 60 # How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
->>>>>>> origin/master
 
 class Ticker:
     def __init__(self, ticker):
