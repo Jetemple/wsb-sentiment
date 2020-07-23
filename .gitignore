@@ -1,6 +1,8 @@
 #My Files
 no-commit/
 config.py
+test.py
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
