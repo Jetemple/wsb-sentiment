@@ -72,7 +72,6 @@ def analyze_text(text):
                         with open("cache.json", "w") as f:
                             json.dump(data,f)
                     except Exception as e:
-                        print(e, word)
                         if(word not in data2):
                             add = {word : str(e)}
                             data2.update(add)
