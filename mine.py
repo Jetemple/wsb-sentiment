@@ -13,25 +13,11 @@ sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
 
-# contains client_id and client_secret used to connect
-
-file1 = open("myfile.txt", "w")
-
-# sys.stdout = file1
-# TIME_PERIOD = 60 * 60 * 24 * 1
-TIME_PERIOD = 60 * 60 * 6
-
+TIME_PERIOD = 60 * 60 * 6 #How far back to scrape in UNIX time
 SUBREDDIT = 'wallstreetbets'
 STOCK_SPECIFIC_METION_WEIGHT = 5
 STOCK_POST_MENTION_WEIGHT = 3
 STOCK_DEFAULT_WEIGHT = 1
-
-# handler = logging.StreamHandler()
-# handler.setLevel(logging.DEBUG)
-# logger = logging.getLogger('prawcore')
-# logger.setLevel(logging.DEBUG)
-# logger.addHandler(handler)
-
 
 class Ticker:
     def __init__(self, ticker):
