@@ -11,6 +11,8 @@ from string import punctuation
 import sys
 from tqdm import tqdm # Progress bar
 
+import util
+
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
@@ -63,44 +65,32 @@ def analyze_text(text):
         if (len(word) < 3):
             continue
 
+        tickers = util.csv2dict()
+
         # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha():
-            with open("cache.json") as file, open("false-positives.json") as file2:
-                data = json.load(file)
-                data2 = json.load(file2)
-                # Checks to see if the ticker has been cached.
-                if (word not in data) and (word not in data2):
-                    try: # Add ticker to cache 
-                        company = yf.Ticker(word).info["longName"]
-                        add = {word : company}
-                        data.update(add)
-                        with open("cache.json", "w") as f:
-                            json.dump(data,f)
-                    except Exception as e:
-                        if(word not in data2):
-                            add = {word : str(e)}
-                            data2.update(add)
-                            with open("false-positives.json", "w") as f:
-                                json.dump(data2,f)
-                        continue
-            if (word in data) and (word in ticker_dict):
+        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word in tickers):
+            print("OHHHHH YEAHHHH")
+            if word in ticker_dict:
                 ticker_dict[word].count += 1
                 ticker_dict[word].bodies.append(text)
-            elif word in data:
+            else:
                 ticker_dict[word] = Ticker(word)
                 ticker_dict[word].count = 1
-                ticker_dict[word].bodies.append(text)           
+                ticker_dict[word].bodies.append(text)
     return
 
 
 def crawl_subreddit(subreddit, hours):
     # Create praw connection
+
+
     reddit = praw.Reddit(client_id=config.client_id, client_secret=config.client_secret,
                          user_agent='Comment extraction by /u/PartialSyntax')
 
     # iterate through latest 24 hours of submissions and all comments made on those submissions
     timestamp = int(time.time())
-    for submission in tqdm(reddit.subreddit(SUBREDDIT).new(limit=1000)):
+    # for submission in tqdm(reddit.subreddit(SUBREDDIT).new(limit=1000)):
+    for submission in reddit.subreddit(SUBREDDIT).new(limit=1000):
         time_delta = timestamp - submission.created_utc
         if (time_delta > TIME_PERIOD * hours):
             break
@@ -108,8 +98,20 @@ def crawl_subreddit(subreddit, hours):
             analyze_text(submission.selftext)
         # Parses post comments
         submission.comments.replace_more(limit=None, threshold=0)
-        for comment in tqdm(submission.comments.list()):
-            analyze_text(comment.body)
+        # for comment in tqdm(submission.comments.list()):
+        for comment in submission.comments.list():
+            with open("comment.json") as file:
+                data = json.load(file)
+                if comment.id in data:
+                    print("NEAT")
+                else:
+                    print("RIP")
+                    faux = {comment.id: 0}
+                    data.update(faux)
+                    print(data)
+                    with open("comment.json", "w") as f:
+                            json.dump(data,f)
+                    analyze_text(comment.body)
 
 
 
