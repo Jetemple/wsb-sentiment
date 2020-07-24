@@ -10,6 +10,7 @@ import yfinance as yf
 from string import punctuation
 import sys
 from tqdm import tqdm # Progress bar
+import _pickle as pickle
 
 import util
 
@@ -102,13 +103,12 @@ def crawl_subreddit(subreddit, hours):
         for comment in submission.comments.list():
             with open("comment.json") as file:
                 data = json.load(file)
-                if comment.id in data:
-                    print("NEAT")
+                if comment.permalink in data:
+                    pass
                 else:
-                    print("RIP")
-                    faux = {comment.id: 0}
+                    faux = {comment.permalink: comment.body}
                     data.update(faux)
-                    print(data)
+                    # print(data)
                     with open("comment.json", "w") as f:
                             json.dump(data,f)
                     analyze_text(comment.body)
@@ -125,6 +125,8 @@ def main(args):
     else:   
         crawl_subreddit("wallstreetbets", 1)
     # Puts the tickers into a dict use for counting
+    with open('export.txt', 'w') as f:
+        print(ticker_dict, file=f)
     for ticker in ticker_dict:
         ticker_count[ticker] = ticker_dict[ticker].count
     # Prints the list of tickers in decending order
