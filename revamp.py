@@ -2,6 +2,7 @@ import config
 import json
 import csv
 import praw
+from praw.models import MoreComments
 import time
 import os
 import logging
@@ -12,7 +13,7 @@ from string import punctuation
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
-TIME_PERIOD = 60 * 60 * 4 # How far you want to go back in the subreddit
+TIME_PERIOD = 60 * 60 * 24# How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
@@ -39,14 +40,13 @@ class Ticker:
                 self.neg_count += 1
             else:
                 neutral_count += 1
-
         self.bullish = int(self.pos_count / len(self.bodies) * 100)
         self.bearish = int(self.neg_count / len(self.bodies) * 100)
         self.neutral = int(neutral_count / len(self.bodies) * 100)
 
 
 # list of common english words to remove
-common_word_filters = ["AUG", "CEO", "GOLD", "ALOT", "JAN", "ONCE", "EDIT", "BRO", "SU", "LIFE", "CFO", "JOB", "BIT", "TWO", "BEST", "BIG", "EOD", "HOPE", "AM", "EVER", "PUMP", "NEXT", "HE", "REAL", "WORK", "NICE", "TOO", "MAN", "LOVE", "BY", "VERY", "ANY", "SEE",
+common_word_filters = ["SON","USD","IPO","PDT","ATH","ITM","YOLO","EPS","AUG", "CEO", "GOLD", "ALOT", "JAN", "ONCE", "EDIT", "BRO", "SU", "LIFE", "CFO", "JOB", "BIT", "TWO", "BEST", "BIG", "EOD", "HOPE", "AM", "EVER", "PUMP", "NEXT", "HE", "REAL", "WORK", "NICE", "TOO", "MAN", "LOVE", "BY", "VERY", "ANY", "SEE",
                        "NEW", "WELL", "TELL", "IT", "ONE", "POST", "ON", "TURN", "GOOD", "CAN", "HAS", "GO", "PLAY", "ELSE", "GAIN", "RUN", "INFO", "STAY", "CARE", "ALL", "AT", "PER", "DO", "ARE", "NOW", "BE", "OR", "SO", "OUT", "BEAT", "AGO", "AN", "PEAK", "LOW", "DD", "FOR", "FLAT"]
 
 ticker_dict = {} # Holds all of the tickers
@@ -69,7 +69,7 @@ def analyze_text(text):
             else:
                 ticker_dict[word] = Ticker(word)
                 ticker_dict[word].count = 1
-                ticker_dict[word].bodies.append(text)           
+                ticker_dict[word].bodies.append(text)
     return ticker_dict
 
 
@@ -90,28 +90,30 @@ def crawl_subreddit(subreddit):
             time_delta = timestamp - submission.created_utc
             if (time_delta > TIME_PERIOD):
                 break
-            if submission.id not in data:
-                ticker_dict = analyze_text(submission.title)
-                ticker_dict = analyze_text(submission.selftext)
-                add = {submission.id : submission.num_comments}
-                data.update(add)
-                with open("cache-posts.json", "w") as f:
-                        json.dump(data,f)
+            # if submission.id not in data:
+            ticker_dict = analyze_text(submission.title)
+            ticker_dict = analyze_text(submission.selftext)
+            add = {submission.id : submission.num_comments}
+            # data.update(add)
+                # with open("cache-posts.json", "w") as f:
+                        # json.dump(data,f)
             # print(submission.num_comments)
             # if submission.num_comments > int(data[submission.id]):
             #     break
 
             
             # Parses post comments
-            submission.comments.replace_more(limit=None, threshold=0)
+            # submission.comments.replace_more(limit=None, threshold=0)
             for comment in submission.comments.list():
-                if comment.id not in data:
-                    # print("test")
-                    add = {comment.id : "0"}
-                    data.update(add)
-                    with open("cache-posts.json", "w") as f:
-                            json.dump(data,f)
-                    ticker_dict = analyze_text(comment.body)
+                if isinstance(comment, MoreComments):
+                    continue
+            #     # if comment.id not in data:
+            #     # print("test")
+            #     # add = {comment.id : "0"}
+            #     # data.update(add)
+            #     # with open("cache-posts.json", "w") as f:
+            #     #         json.dump(data,f)
+                ticker_dict = analyze_text(comment.body)
     #         b = time.time()
     #         print(b-aa ,"time to parse go through one post")
     # b = time.time()
@@ -122,10 +124,17 @@ def crawl_subreddit(subreddit):
 crawl_subreddit("wallstreetbets")
 count = {}
 for ticker in ticker_dict:
+    ticker_dict[ticker].analyze_sentiment()
+    # print(ticker_dict[ticker].pos_count)
     count[ticker] = ticker_dict[ticker].count
 
-
+print("Stock \t Count \t Bullish \t Neutral \t Bearish")
 for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
-    print(key, value)
+    # print("Bullish", ticker_dict[key].bullish)
+    # print("Neutral", ticker_dict[key].neutral)
+    # print("Bearish", ticker_dict[key].bearish)
+    # print(key, value , ticker_dict[key].bullish , ticker_dict[key].neutral , ticker_dict[key].bearish)
+    # print(key, "\t", value , "\t",ticker_dict[key].pos_count ,len(ticker_dict[key].bodies) ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
+    print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
 b = time.time()
 print(b-a)
