@@ -8,22 +8,14 @@ import logging
 import sys
 import yfinance as yf
 from string import punctuation
-import sys
-from tqdm import tqdm # Progress bar
-import _pickle as pickle
-
-import util
 
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
-TIME_PERIOD = 60 * 60
+TIME_PERIOD = 60 * 60 * 4 # How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
-# Should probably get rid of these global variables
-ticker_dict = {} # Holds all of the tickers
-ticker_count = {}
-
+a = time.time()
 class Ticker:
     def __init__(self, ticker):
         self.ticker = ticker
@@ -57,6 +49,8 @@ class Ticker:
 common_word_filters = ["AUG", "CEO", "GOLD", "ALOT", "JAN", "ONCE", "EDIT", "BRO", "SU", "LIFE", "CFO", "JOB", "BIT", "TWO", "BEST", "BIG", "EOD", "HOPE", "AM", "EVER", "PUMP", "NEXT", "HE", "REAL", "WORK", "NICE", "TOO", "MAN", "LOVE", "BY", "VERY", "ANY", "SEE",
                        "NEW", "WELL", "TELL", "IT", "ONE", "POST", "ON", "TURN", "GOOD", "CAN", "HAS", "GO", "PLAY", "ELSE", "GAIN", "RUN", "INFO", "STAY", "CARE", "ALL", "AT", "PER", "DO", "ARE", "NOW", "BE", "OR", "SO", "OUT", "BEAT", "AGO", "AN", "PEAK", "LOW", "DD", "FOR", "FLAT"]
 
+ticker_dict = {} # Holds all of the tickers
+tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 
 # Checks to see if there are tickers in the word
 def analyze_text(text):
@@ -66,76 +60,72 @@ def analyze_text(text):
         if (len(word) < 3):
             continue
 
-        tickers = util.csv2dict()
-
         # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word in tickers):
-            print("OHHHHH YEAHHHH")
-            if word in ticker_dict:
+        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
+            # Checks to see if the ticker has been cached.
+            if (word in ticker_dict):
                 ticker_dict[word].count += 1
                 ticker_dict[word].bodies.append(text)
             else:
                 ticker_dict[word] = Ticker(word)
                 ticker_dict[word].count = 1
-                ticker_dict[word].bodies.append(text)
-    return
+                ticker_dict[word].bodies.append(text)           
+    return ticker_dict
 
 
-def crawl_subreddit(subreddit, hours):
+def crawl_subreddit(subreddit):
+    a = time.time()
     # Create praw connection
-
-
-    reddit = praw.Reddit(client_id=config.client_id, client_secret=config.client_secret,
+    reddit = praw.Reddit(client_id=config.CLIENT_ID, client_secret=config.CLIENT_SECRETS,
                          user_agent='Comment extraction by /u/PartialSyntax')
-
+    b = time.time()
+    # print(b-a ,"time to connect to reddits")
+    a = time.time()
     # iterate through latest 24 hours of submissions and all comments made on those submissions
-    timestamp = int(time.time())
-    # for submission in tqdm(reddit.subreddit(SUBREDDIT).new(limit=1000)):
-    for submission in reddit.subreddit(SUBREDDIT).new(limit=1000):
-        time_delta = timestamp - submission.created_utc
-        if (time_delta > TIME_PERIOD * hours):
-            break
-            analyze_text(submission.title)
-            analyze_text(submission.selftext)
-        # Parses post comments
-        submission.comments.replace_more(limit=None, threshold=0)
-        # for comment in tqdm(submission.comments.list()):
-        for comment in submission.comments.list():
-            with open("comment.json") as file:
-                data = json.load(file)
-                if comment.permalink in data:
-                    pass
-                else:
-                    faux = {comment.permalink: comment.body}
-                    data.update(faux)
-                    # print(data)
-                    with open("comment.json", "w") as f:
+    with open("cache-posts.json") as file:
+        data = json.load(file)
+        timestamp = int(time.time())
+        aa = time.time()
+        for submission in reddit.subreddit(SUBREDDIT).new(limit=1000):
+            time_delta = timestamp - submission.created_utc
+            if (time_delta > TIME_PERIOD):
+                break
+            if submission.id not in data:
+                ticker_dict = analyze_text(submission.title)
+                ticker_dict = analyze_text(submission.selftext)
+                add = {submission.id : submission.num_comments}
+                data.update(add)
+                with open("cache-posts.json", "w") as f:
+                        json.dump(data,f)
+            # print(submission.num_comments)
+            # if submission.num_comments > int(data[submission.id]):
+            #     break
+
+            
+            # Parses post comments
+            submission.comments.replace_more(limit=None, threshold=0)
+            for comment in submission.comments.list():
+                if comment.id not in data:
+                    # print("test")
+                    add = {comment.id : "0"}
+                    data.update(add)
+                    with open("cache-posts.json", "w") as f:
                             json.dump(data,f)
-                    analyze_text(comment.body)
+                    ticker_dict = analyze_text(comment.body)
+    #         b = time.time()
+    #         print(b-aa ,"time to parse go through one post")
+    # b = time.time()
+    # print(b-a ,"time to parse comments")
+                
 
 
-
-def main(args):
-    if len(args) > 1:
-        try:
-            crawl_subreddit("wallstreetbets", int(args[1]))
-        except:
-            print("ERROR: First argument must be a number")
-            return
-    else:   
-        crawl_subreddit("wallstreetbets", 1)
-    # Puts the tickers into a dict use for counting
-    with open('export.txt', 'w') as f:
-        print(ticker_dict, file=f)
-    for ticker in ticker_dict:
-        ticker_count[ticker] = ticker_dict[ticker].count
-    # Prints the list of tickers in decending order
-    for key, value in sorted(ticker_count.items(), key=lambda x: x[1], reverse=True):
-        print(key, value)
+crawl_subreddit("wallstreetbets")
+count = {}
+for ticker in ticker_dict:
+    count[ticker] = ticker_dict[ticker].count
 
 
-
-if __name__ == '__main__':
-    print("Running...")
-    main(sys.argv)
-    
+for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
+    print(key, value)
+b = time.time()
+print(b-a)

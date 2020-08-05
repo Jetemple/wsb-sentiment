@@ -15,6 +15,7 @@ from vaderSentiment import SentimentIntensityAnalyzer
 TIME_PERIOD = 60 * 60 # How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
+a=time.time
 class Ticker:
     def __init__(self, ticker):
         self.ticker = ticker
@@ -90,7 +91,7 @@ def analyze_text(text):
 
 def crawl_subreddit(subreddit):
     # Create praw connection
-    reddit = praw.Reddit(client_id=config.client_id, client_secret=config.client_secret,
+    reddit = praw.Reddit(client_id=config.CLIENT_ID, client_secret=config.CLIENT_SECRETS,
                          user_agent='Comment extraction by /u/PartialSyntax')
 
     # iterate through latest 24 hours of submissions and all comments made on those submissions
@@ -115,3 +116,5 @@ for ticker in ticker_dict:
 
 for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
     print(key, value)
+b = time.time()
+print(b-a)
