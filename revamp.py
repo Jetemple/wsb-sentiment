@@ -55,13 +55,18 @@ ticker_dict = {} # Holds all of the tickers
 tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 
 # Checks to see if there are tickers in the word
-def analyze_text(text, id, time):
+def analyze_text(item):
+    if(type(item) == praw.models.reddit.comment.Comment):
+        # print("Working")
+        time = item.created_utc
+        id = item.id
+        text = item.body
     for word in text.split():
         word = word.rstrip(punctuation)
 
         if (len(word) < 3):
             continue
-
+ 
         # Does word fit the ticker criteria
         if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
             # Checks to see if the ticker has been cached.
@@ -73,7 +78,7 @@ def analyze_text(text, id, time):
                 ticker_dict[word].count = 1
                 ticker_dict[word].bodies.append(text)
             dbm.addTicker(word)
-            dbm.addComment(id,time,word)
+            dbm.addComment(id,time,word, item.link_id)
     return ticker_dict
 
 
@@ -86,41 +91,27 @@ def crawl_subreddit(subreddit):
     # print(b-a ,"time to connect to reddits")
     a = time.time()
     # iterate through latest 24 hours of submissions and all comments made on those submissions
-    with open("cache-posts.json") as file:
-        data = json.load(file)
-        timestamp = int(time.time())
-        aa = time.time()
-        for submission in reddit.subreddit(SUBREDDIT).new(limit=1000):
-            time_delta = timestamp - submission.created_utc
-            if (time_delta > TIME_PERIOD):
-                break
-            # if submission.id not in data:
-            # if not dbm.checkComment(submission.id):
-            #     ticker_dict = analyze_text(submission.title, submission.id, submission.created_utc)
-            #     ticker_dict = analyze_text(submission.selftext, submission.id, submission.created_utc)
-            
-             # dbm.addPost(submission.id, submission.num_comments, submission.id)
-            ticker_dict = analyze_text(submission.title, submission.id, submission.created_utc)
-            ticker_dict = analyze_text(submission.selftext, submission.id, submission.created_utc)
-            if not(dbm.addPost(submission.id, submission.num_comments, submission.created_utc)):
-                count = dbm.getCommentCount(submission)
-                if(count == submission.num_comments):
-                    print("Skipped!!!!")
-                    continue
-                         
-            # Parses post comments
-            # submission.comments.replace_more(limit=None, threshold=0)
-            for comment in submission.comments.list():
-                if isinstance(comment, MoreComments):
-                    continue
-            #     # if comment.id not in data:
-            #     # print("test")
-            #     # add = {comment.id : "0"}
-            #     # data.update(add)
-            #     # with open("cache-posts.json", "w") as f:
-            #     #         json.dump(data,f)
-                if(dbm.checkComment(comment.id)):
-                    ticker_dict = analyze_text(comment.body, comment.id, comment.created_utc)
+    timestamp = int(time.time())
+    aa = time.time()
+    for submission in reddit.subreddit(SUBREDDIT).new(limit=1000):
+        time_delta = timestamp - submission.created_utc
+        if (time_delta > TIME_PERIOD):
+            break
+        # if(dbm.addPost(submission.id, submission.num_comments, submission.created_utc)):
+            # ticker_dict = analyze_text(submission.title, submission.id, submission.created_utc)
+            # ticker_dict = analyze_text(submission.selftext, submission.id, submission.created_utc)
+        # count = dbm.getCommentCount(submission)
+        # if(count == submission.num_comments):
+        #     print("Skipped!!!!")
+        #     continue
+                        
+        # Parses post comments
+        # submission.comments.replace_more(limit=None, threshold=0)
+        for comment in submission.comments.list():
+            if isinstance(comment, MoreComments):
+                continue
+            if not(dbm.checkComment(comment.id)):
+                ticker_dict = analyze_text(comment)
                 
     #         b = time.time()
     #         print(b-aa ,"time to parse go through one post")

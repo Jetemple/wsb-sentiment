@@ -14,24 +14,13 @@ def sql_connection():
 
         print(Error)
 
-def sql_table(con):
 
-    cursorObj = con.cursor()
-
-    # cursorObj.execute("CREATE TABLE employees(id integer PRIMARY KEY, name text, salary real, department text, position text, hireDate text)")
-    # cursorObj.execute("INSERT INTO stocks VALUES ('aapl', 2)")
-    cursorObj.execute("INSERT INTO comments VALUES ('g4344', 2, 'tsla')")
-
-    con.commit()
-
-# con = sql_connection()
-
-
-def addComment(id, date, ticker):
+def addComment(id, date, ticker, post):
     try:
+        post = post[3:]
         con = sql_connection()
         cursorObj = con.cursor()
-        cursorObj.execute("INSERT INTO comments VALUES (?, ?, ?)",(id, date, ticker))
+        cursorObj.execute("INSERT INTO comments VALUES (?, ?, ?, ?)",(id, date, ticker, post))
         con.commit()
     except:
         print("Skipped")
@@ -53,7 +42,8 @@ def addTicker(ticker):
         cursorObj.execute("INSERT INTO stocks VALUES (?)",([ticker]))
         con.commit()
     except:
-        print("STOCK ALREADY IN THERE")
+        pass
+        # print("STOCK ALREADY IN THERE")
 
 
 def checkTicker(ticker):
@@ -63,7 +53,6 @@ def checkTicker(ticker):
     cursorObj.execute("SELECT COUNT(1) FROM stocks WHERE ticker = ?",([ticker]))
     con.commit()
     val = cursorObj.fetchone()[0]
-    print(val)
     if(val == 0):
         return False
     return True
@@ -74,7 +63,6 @@ def checkComment(id):
     cursorObj.execute("SELECT COUNT(1) FROM comments WHERE comment_id = ?",([id]))
     con.commit()
     val = cursorObj.fetchone()[0]
-    print(val)
     if(val == 0):
         return False
     return True
@@ -85,7 +73,6 @@ def getCommentCount(id):
     cursorObj.execute("SELECT comment_count FROM posts WHERE post_id = ?",([str(id)]))
     con.commit()
     val = cursorObj.fetchone()[0]
-    print(val)
     return val
 
     
