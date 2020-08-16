@@ -9,11 +9,13 @@ import logging
 import sys
 import yfinance as yf
 from string import punctuation
+import dbm
 
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
-TIME_PERIOD = 60 * 60 * 24# How far you want to go back in the subreddit
+
+TIME_PERIOD = 60 * 60 # How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
@@ -53,7 +55,7 @@ ticker_dict = {} # Holds all of the tickers
 tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 
 # Checks to see if there are tickers in the word
-def analyze_text(text):
+def analyze_text(text, id, time):
     for word in text.split():
         word = word.rstrip(punctuation)
 
@@ -70,6 +72,8 @@ def analyze_text(text):
                 ticker_dict[word] = Ticker(word)
                 ticker_dict[word].count = 1
                 ticker_dict[word].bodies.append(text)
+            dbm.addTicker(word)
+            dbm.addComment(id,time,word)
     return ticker_dict
 
 
@@ -91,17 +95,19 @@ def crawl_subreddit(subreddit):
             if (time_delta > TIME_PERIOD):
                 break
             # if submission.id not in data:
-            ticker_dict = analyze_text(submission.title)
-            ticker_dict = analyze_text(submission.selftext)
-            add = {submission.id : submission.num_comments}
-            # data.update(add)
-                # with open("cache-posts.json", "w") as f:
-                        # json.dump(data,f)
-            # print(submission.num_comments)
-            # if submission.num_comments > int(data[submission.id]):
-            #     break
-
+            # if not dbm.checkComment(submission.id):
+            #     ticker_dict = analyze_text(submission.title, submission.id, submission.created_utc)
+            #     ticker_dict = analyze_text(submission.selftext, submission.id, submission.created_utc)
             
+             # dbm.addPost(submission.id, submission.num_comments, submission.id)
+            ticker_dict = analyze_text(submission.title, submission.id, submission.created_utc)
+            ticker_dict = analyze_text(submission.selftext, submission.id, submission.created_utc)
+            if not(dbm.addPost(submission.id, submission.num_comments, submission.created_utc)):
+                count = dbm.getCommentCount(submission)
+                if(count == submission.num_comments):
+                    print("Skipped!!!!")
+                    continue
+                         
             # Parses post comments
             # submission.comments.replace_more(limit=None, threshold=0)
             for comment in submission.comments.list():
@@ -113,7 +119,9 @@ def crawl_subreddit(subreddit):
             #     # data.update(add)
             #     # with open("cache-posts.json", "w") as f:
             #     #         json.dump(data,f)
-                ticker_dict = analyze_text(comment.body)
+                if(dbm.checkComment(comment.id)):
+                    ticker_dict = analyze_text(comment.body, comment.id, comment.created_utc)
+                
     #         b = time.time()
     #         print(b-aa ,"time to parse go through one post")
     # b = time.time()

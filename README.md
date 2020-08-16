@@ -6,19 +6,22 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
+## TODO List 
+
+* [] Improve VADER Sentiment
+* [] Create Web App 
+* [] Add comments to database
+
 ### Prerequisites
 
 ```
 pip install -r requirements.txt
 ```
 
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Built With
 
-* ***Future*** [VaderSentiment](https://github.com/cjhutto/vaderSentiment) - Used to determine if comment of ticker is Bullish or Bearish. *(Tweaked with personal rules)*
+* ***Future*** : [VaderSentiment](https://github.com/cjhutto/vaderSentiment) - Used to determine if comment of ticker is Bullish or Bearish. *(Tweaked with personal rules)*
 
 ## Contributing
 
