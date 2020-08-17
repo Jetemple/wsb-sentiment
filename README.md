@@ -8,9 +8,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## TODO List 
 
-- [] Improve VADER Sentiment
-- [] Create Web App 
-- [] Create setup.py
+- [ ] Improve VADER Sentiment
+- [ ] Create Web App 
+- [ ] Create setup.py
 - [x] Add comments to database
 
 ### Prerequisites
