@@ -10,7 +10,8 @@ These instructions will get you a copy of the project up and running on your loc
 
 * [] Improve VADER Sentiment
 * [] Create Web App 
-* [] Add comments to database
+* [] Create setup.py
+* [x] Add comments to database
 
 ### Prerequisites
 

@@ -2,6 +2,9 @@
 no-commit/
 config.py
 test.py
+sql-queries/
+*.db
+symbols.txt
 
 
 # Byte-compiled / optimized / DLL files

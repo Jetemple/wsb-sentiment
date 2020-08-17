@@ -19,6 +19,7 @@ def fetch_symbols():
     os.system("awk '{print $1}' ./temp/otherslisted.lst2 ./temp/nasdaq.lst2 > symbols.txt")
     shutil.rmtree("temp")
 
+# Not Used
 def csv2dict():
     with open('symbols.txt','r') as c:
         lines = c.readlines()

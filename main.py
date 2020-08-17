@@ -2,28 +2,23 @@ import config
 import json
 import csv
 import praw
+from praw.models import MoreComments
 import time
 import os
 import logging
 import sys
 import yfinance as yf
 from string import punctuation
-import sys
-from tqdm import tqdm # Progress bar
-import _pickle as pickle
-
-import util
+import dbm
 
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
-TIME_PERIOD = 60 * 60
+
+TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
-# Should probably get rid of these global variables
-ticker_dict = {} # Holds all of the tickers
-ticker_count = {}
-
+a = time.time()
 class Ticker:
     def __init__(self, ticker):
         self.ticker = ticker
@@ -47,95 +42,119 @@ class Ticker:
                 self.neg_count += 1
             else:
                 neutral_count += 1
-
         self.bullish = int(self.pos_count / len(self.bodies) * 100)
         self.bearish = int(self.neg_count / len(self.bodies) * 100)
         self.neutral = int(neutral_count / len(self.bodies) * 100)
 
 
+
+def analyze_sentiment(text):
+    analyzer = SentimentIntensityAnalyzer()
+    sentiment = analyzer.polarity_scores(text)
+    if (sentiment["compound"] > .005) or (sentiment["pos"] > abs(sentiment["neg"])):
+        return "Bullish"
+    elif (sentiment["compound"] < -.005) or (abs(sentiment["neg"]) > sentiment["pos"]):
+        return "Bearish"
+    else:
+        return "Neutral"
+
+
 # list of common english words to remove
-common_word_filters = ["AUG", "CEO", "GOLD", "ALOT", "JAN", "ONCE", "EDIT", "BRO", "SU", "LIFE", "CFO", "JOB", "BIT", "TWO", "BEST", "BIG", "EOD", "HOPE", "AM", "EVER", "PUMP", "NEXT", "HE", "REAL", "WORK", "NICE", "TOO", "MAN", "LOVE", "BY", "VERY", "ANY", "SEE",
+common_word_filters = ["SON","USD","IPO","PDT","ATH","ITM","YOLO","EPS","AUG", "CEO", "GOLD", "ALOT", "JAN", "ONCE", "EDIT", "BRO", "SU", "LIFE", "CFO", "JOB", "BIT", "TWO", "BEST", "BIG", "EOD", "HOPE", "AM", "EVER", "PUMP", "NEXT", "HE", "REAL", "WORK", "NICE", "TOO", "MAN", "LOVE", "BY", "VERY", "ANY", "SEE",
                        "NEW", "WELL", "TELL", "IT", "ONE", "POST", "ON", "TURN", "GOOD", "CAN", "HAS", "GO", "PLAY", "ELSE", "GAIN", "RUN", "INFO", "STAY", "CARE", "ALL", "AT", "PER", "DO", "ARE", "NOW", "BE", "OR", "SO", "OUT", "BEAT", "AGO", "AN", "PEAK", "LOW", "DD", "FOR", "FLAT"]
 
+ticker_dict = {} # Holds all of the tickers
+tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 
 # Checks to see if there are tickers in the word
-def analyze_text(text):
+def analyze_text(item):
+    post = type(item) == praw.models.reddit.submission.Submission
+    if(post):
+        text = item.title
+        text = text + (item.selftext)
+    else:
+        text = item.body
+    time = item.created_utc
+    id = item.id
+    
     for word in text.split():
         word = word.rstrip(punctuation)
 
         if (len(word) < 3):
             continue
-
-        tickers = util.csv2dict()
-
+ 
         # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word in tickers):
-            print("OHHHHH YEAHHHH")
-            if word in ticker_dict:
+        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
+            # Checks to see if the ticker has been cached.
+            sentiment = analyze_sentiment(text)
+            if (word in ticker_dict):
                 ticker_dict[word].count += 1
                 ticker_dict[word].bodies.append(text)
             else:
                 ticker_dict[word] = Ticker(word)
                 ticker_dict[word].count = 1
                 ticker_dict[word].bodies.append(text)
-    return
+            dbm.addTicker(word)
+            if not(post):
+                dbm.addComment(id,time,word, item.link_id, text, sentiment)
+    return ticker_dict
 
 
-def crawl_subreddit(subreddit, hours):
+def crawl_subreddit(subreddit):
+    a = time.time()
     # Create praw connection
-
-
-    reddit = praw.Reddit(client_id=config.client_id, client_secret=config.client_secret,
+    reddit = praw.Reddit(client_id=config.CLIENT_ID, client_secret=config.CLIENT_SECRETS,
                          user_agent='Comment extraction by /u/PartialSyntax')
-
+    b = time.time()
+    # print(b-a ,"time to connect to reddits")
+    a = time.time()
     # iterate through latest 24 hours of submissions and all comments made on those submissions
     timestamp = int(time.time())
-    # for submission in tqdm(reddit.subreddit(SUBREDDIT).new(limit=1000)):
+    aa = time.time()
     for submission in reddit.subreddit(SUBREDDIT).new(limit=1000):
         time_delta = timestamp - submission.created_utc
-        if (time_delta > TIME_PERIOD * hours):
+        if (time_delta > TIME_PERIOD):
             break
-            analyze_text(submission.title)
-            analyze_text(submission.selftext)
+        old = True
+        seen = dbm.checkPost(submission.id)
+        if not (seen):
+            dbm.addPost(submission.id, submission.num_comments, submission.created_utc)
+            ticker_dict = analyze_text(submission)
+            old = False
+        count = dbm.getCommentCount(submission)
+        if(seen and count == submission.num_comments):
+            print("Skipped!!!!")
+            continue
+                        
         # Parses post comments
-        submission.comments.replace_more(limit=None, threshold=0)
-        # for comment in tqdm(submission.comments.list()):
+        # submission.comments.replace_more(limit=None, threshold=0)
         for comment in submission.comments.list():
-            with open("comment.json") as file:
-                data = json.load(file)
-                if comment.permalink in data:
-                    pass
-                else:
-                    faux = {comment.permalink: comment.body}
-                    data.update(faux)
-                    # print(data)
-                    with open("comment.json", "w") as f:
-                            json.dump(data,f)
-                    analyze_text(comment.body)
+            if isinstance(comment, MoreComments):
+                continue
+            if not(dbm.checkComment(comment.id)):
+                ticker_dict = analyze_text(comment)
+                
+    #         b = time.time()
+    #         print(b-aa ,"time to parse go through one post")
+    # b = time.time()
+    # print(b-a ,"time to parse comments")
+                
 
 
+crawl_subreddit("wallstreetbets")
+count = {}
+for ticker in ticker_dict:
+    ticker_dict[ticker].analyze_sentiment()
+    # print(ticker_dict[ticker].pos_count)
+    count[ticker] = ticker_dict[ticker].count
 
-def main(args):
-    if len(args) > 1:
-        try:
-            crawl_subreddit("wallstreetbets", int(args[1]))
-        except:
-            print("ERROR: First argument must be a number")
-            return
-    else:   
-        crawl_subreddit("wallstreetbets", 1)
-    # Puts the tickers into a dict use for counting
-    with open('export.txt', 'w') as f:
-        print(ticker_dict, file=f)
-    for ticker in ticker_dict:
-        ticker_count[ticker] = ticker_dict[ticker].count
-    # Prints the list of tickers in decending order
-    for key, value in sorted(ticker_count.items(), key=lambda x: x[1], reverse=True):
-        print(key, value)
-
-
-
-if __name__ == '__main__':
-    print("Running...")
-    main(sys.argv)
-    
+print("Stock \t Count \t Bullish \t Neutral \t Bearish")
+for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
+    # print("Bullish", ticker_dict[key].bullish)
+    # print("Neutral", ticker_dict[key].neutral)
+    # print("Bearish", ticker_dict[key].bearish)
+    # print(key, value , ticker_dict[key].bullish , ticker_dict[key].neutral , ticker_dict[key].bearish)
+    # print(key, "\t", value , "\t",ticker_dict[key].pos_count ,len(ticker_dict[key].bodies) ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
+    print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
+b = time.time()
+print(b-a)

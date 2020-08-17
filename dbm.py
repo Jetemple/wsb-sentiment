@@ -15,15 +15,19 @@ def sql_connection():
         print(Error)
 
 
-def addComment(id, date, ticker, post):
+def addComment(id, date, ticker, post, body, sentiment):
     try:
+        # print("New COMMENT!")
         post = post[3:]
         con = sql_connection()
         cursorObj = con.cursor()
-        cursorObj.execute("INSERT INTO comments VALUES (?, ?, ?, ?)",(id, date, ticker, post))
+        cursorObj.execute("INSERT INTO comments VALUES (?, ?, ?, ?, ?, ?)",(id, date, ticker, post, body, sentiment))
         con.commit()
-    except:
-        print("Skipped")
+    except Exception as e:
+        # print(e)
+        pass
+    #     pass
+    #     # print("Skipped")
 
 def addPost(id, comment_count, date):
     try:
@@ -31,9 +35,9 @@ def addPost(id, comment_count, date):
         cursorObj = con.cursor()
         cursorObj.execute("INSERT INTO posts VALUES (?, ?, ?)",(id, comment_count, date))
         con.commit()
-        return True
     except:
-        print("Skipped")
+        pass
+        # print("Skipped")
 
 def addTicker(ticker):
     try:
@@ -61,6 +65,16 @@ def checkComment(id):
     con = sql_connection()
     cursorObj = con.cursor()
     cursorObj.execute("SELECT COUNT(1) FROM comments WHERE comment_id = ?",([id]))
+    con.commit()
+    val = cursorObj.fetchone()[0]
+    if(val == 0):
+        return False
+    return True
+
+def checkPost(id):
+    con = sql_connection()
+    cursorObj = con.cursor()
+    cursorObj.execute("SELECT COUNT(1) FROM posts WHERE post_id = ?",([id]))
     con.commit()
     val = cursorObj.fetchone()[0]
     if(val == 0):
