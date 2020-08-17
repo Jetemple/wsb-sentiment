@@ -8,10 +8,10 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## TODO List 
 
-* [] Improve VADER Sentiment
-* [] Create Web App 
-* [] Create setup.py
-* [x] Add comments to database
+- [] Improve VADER Sentiment
+- [] Create Web App 
+- [] Create setup.py
+- [x] Add comments to database
 
 ### Prerequisites
 
@@ -23,6 +23,7 @@ pip install -r requirements.txt
 ## Built With
 
 * ***Future*** : [VaderSentiment](https://github.com/cjhutto/vaderSentiment) - Used to determine if comment of ticker is Bullish or Bearish. *(Tweaked with personal rules)*
+* SQLITE3
 
 ## Contributing
 
