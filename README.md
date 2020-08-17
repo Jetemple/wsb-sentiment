@@ -2,16 +2,22 @@
 
 This tool is used to parse all of the comments on WSB in the past X time. Counts the tickers and their occurrence count, then presents if WSB is bullish or bearish or neutral on said ticker. (Using a custom version of VaderSentiment)
 
+## TODO List 
+
+- [ ] Improve VADER Sentiment
+- [ ] Add Changelog
+- [ ] Create Web App 
+- [ ] Create setup.py
+- [x] Add comments to database
+
+## Issues 
+* PRAW limited to last 1000 items.
+* Potential for multiple tickers within comments.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-## TODO List 
-
-- [ ] Improve VADER Sentiment
-- [ ] Create Web App 
-- [ ] Create setup.py
-- [x] Add comments to database
 
 ### Prerequisites
 
