@@ -101,21 +101,15 @@ def analyze_text(item):
 
 
 def crawl_subreddit(subreddit):
-    a = time.time()
     # Create praw connection
     reddit = praw.Reddit(client_id=config.CLIENT_ID, client_secret=config.CLIENT_SECRETS,
                          user_agent='Comment extraction by /u/PartialSyntax')
-    b = time.time()
-    # print(b-a ,"time to connect to reddits")
-    a = time.time()
     # iterate through latest 24 hours of submissions and all comments made on those submissions
     timestamp = int(time.time())
-    aa = time.time()
     for submission in reddit.subreddit(SUBREDDIT).new(limit=1000):
         time_delta = timestamp - submission.created_utc
         if (time_delta > TIME_PERIOD):
             break
-        old = True
         seen = dbm.checkPost(submission.id)
         if not (seen):
             dbm.addPost(submission.id, submission.num_comments, submission.created_utc)
@@ -123,21 +117,14 @@ def crawl_subreddit(subreddit):
             old = False
         count = dbm.getCommentCount(submission)
         if(seen and count == submission.num_comments):
-            print("Skipped!!!!")
             continue
                         
         # Parses post comments
-        # submission.comments.replace_more(limit=None, threshold=0)
         for comment in submission.comments.list():
             if isinstance(comment, MoreComments):
                 continue
             if not(dbm.checkComment(comment.id)):
                 ticker_dict = analyze_text(comment)
-                
-    #         b = time.time()
-    #         print(b-aa ,"time to parse go through one post")
-    # b = time.time()
-    # print(b-a ,"time to parse comments")
                 
 
 
@@ -145,16 +132,8 @@ crawl_subreddit("wallstreetbets")
 count = {}
 for ticker in ticker_dict:
     ticker_dict[ticker].analyze_sentiment()
-    # print(ticker_dict[ticker].pos_count)
     count[ticker] = ticker_dict[ticker].count
 
 print("Stock \t Count \t Bullish \t Neutral \t Bearish")
 for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
-    # print("Bullish", ticker_dict[key].bullish)
-    # print("Neutral", ticker_dict[key].neutral)
-    # print("Bearish", ticker_dict[key].bearish)
-    # print(key, value , ticker_dict[key].bullish , ticker_dict[key].neutral , ticker_dict[key].bearish)
-    # print(key, "\t", value , "\t",ticker_dict[key].pos_count ,len(ticker_dict[key].bodies) ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
     print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
-b = time.time()
-print(b-a)
