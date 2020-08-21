@@ -8,6 +8,7 @@ import os
 import logging
 import sys
 import yfinance as yf
+import requests
 from string import punctuation
 import dbm
 
@@ -15,7 +16,7 @@ sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
 
-TIME_PERIOD = 60 * 60 * 9# How far you want to go back in the subreddit
+TIME_PERIOD = 60 * 60 * 24# How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
@@ -71,13 +72,21 @@ tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 # Checks to see if there are tickers in the word
 def analyze_text(item):
     post = type(item) == praw.models.reddit.submission.Submission
+    isDict = type(item) == dict
     if(post):
         text = item.title
         text = text + (item.selftext)
+        time = item.created_utc
+        id = item.id
+    elif(isDict):
+        text = item['body']
+        id = item['id']
+        time = item['created_utc']
     else:
         text = item.body
-    time = item.created_utc
-    id = item.id
+        time = item.created_utc
+        id = item.id
+    
     
     for word in text.split():
         word = word.rstrip(punctuation)
@@ -97,8 +106,11 @@ def analyze_text(item):
                 ticker_dict[word].count = 1
                 ticker_dict[word].bodies.append(text)
             dbm.addTicker(word)
-            if not(post):
+            if not(post or isDict):
                 dbm.addComment(id,time,word, item.link_id, text, sentiment)
+            elif not(post):
+                # print(id)
+                dbm.addComment(id,time,word, item['parent_id'], text, sentiment)
     return ticker_dict
 
 
@@ -113,7 +125,7 @@ def crawl_subreddit(subreddit):
         if (time_delta > TIME_PERIOD):
             break
         seen = dbm.checkPost(submission.id)
-        if not (seen):
+        if not (seen and submission.num_comments<1000):
             dbm.addPost(submission.id, submission.num_comments, submission.created_utc)
             ticker_dict = analyze_text(submission)
             old = False
@@ -125,20 +137,47 @@ def crawl_subreddit(subreddit):
         for comment in submission.comments.list():
             if isinstance(comment, MoreComments):
                 large_threads.append(submission.id)
-                continue
+                print("isue?")
+                break
             if not(dbm.checkComment(comment.id)):
                 ticker_dict = analyze_text(comment)
+
+def getLarge(threadId, cutoff):
+    url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
+    if (cutoff != 0):
+        url = str(url) + "&before="+str(cutoff)
+    # print(url)
+    r = requests.get(url)
+    # print(r)
+    data = r.json()
+    count = 0
+    for d in data['data']:
+        # print(d['id'])
+        analyze_text(d)
+        count += 1
+        cutoff = d['created_utc']
+    if(count == 20000):
+        return cutoff
+    return -1
+
                 
 
-
+a = time.time()
 crawl_subreddit("wallstreetbets")
+print("Start Large Threads")
+for t in large_threads:
+    print(t)
+    cutoff = 0
+    while(cutoff != -1):
+        cutoff = getLarge(t,cutoff)
+
+
 count = {}
 # for ticker in ticker_dict:
 #     ticker_dict[ticker].analyze_sentiment()
 #     count[ticker] = ticker_dict[ticker].count
-for thread in large_threads:
-    print(thread)
 
 print("Stock \t Count \t Bullish \t Neutral \t Bearish")
 for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
     print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
+print(time.time()-a)
