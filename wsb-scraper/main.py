@@ -15,7 +15,7 @@ sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
 
-TIME_PERIOD = 60 * 60 * 1# How far you want to go back in the subreddit
+TIME_PERIOD = 60 * 60 * 9# How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
@@ -58,6 +58,8 @@ def analyze_sentiment(text):
     else:
         return "Neutral"
 
+# Large comment threads
+large_threads=[]
 
 # list of common english words to remove
 common_word_filters = ["SON","USD","IPO","PDT","ATH","ITM","YOLO","EPS","AUG", "CEO", "GOLD", "ALOT", "JAN", "ONCE", "EDIT", "BRO", "SU", "LIFE", "CFO", "JOB", "BIT", "TWO", "BEST", "BIG", "EOD", "HOPE", "AM", "EVER", "PUMP", "NEXT", "HE", "REAL", "WORK", "NICE", "TOO", "MAN", "LOVE", "BY", "VERY", "ANY", "SEE",
@@ -122,6 +124,7 @@ def crawl_subreddit(subreddit):
         # Parses post comments
         for comment in submission.comments.list():
             if isinstance(comment, MoreComments):
+                large_threads.append(submission.id)
                 continue
             if not(dbm.checkComment(comment.id)):
                 ticker_dict = analyze_text(comment)
@@ -130,9 +133,11 @@ def crawl_subreddit(subreddit):
 
 crawl_subreddit("wallstreetbets")
 count = {}
-for ticker in ticker_dict:
-    ticker_dict[ticker].analyze_sentiment()
-    count[ticker] = ticker_dict[ticker].count
+# for ticker in ticker_dict:
+#     ticker_dict[ticker].analyze_sentiment()
+#     count[ticker] = ticker_dict[ticker].count
+for thread in large_threads:
+    print(thread)
 
 print("Stock \t Count \t Bullish \t Neutral \t Bearish")
 for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
