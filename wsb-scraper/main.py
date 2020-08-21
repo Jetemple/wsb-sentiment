@@ -15,7 +15,7 @@ sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
 
-TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
+TIME_PERIOD = 60 * 60 * 1# How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
@@ -123,7 +123,6 @@ def crawl_subreddit(subreddit):
             old = False
         count = dbm.getCommentCount(submission)
         if(seen and count == submission.num_comments):
-            print("Skipped!!!!")
             continue
                         
         # Parses post comments
