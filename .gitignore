@@ -5,6 +5,7 @@ test.py
 sql-queries/
 *.db
 symbols.txt
+.vscode
 
 
 # Byte-compiled / optimized / DLL files
