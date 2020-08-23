@@ -8,10 +8,11 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 - [ ] Add Changelog
 - [ ] Create Web App 
 - [ ] Create setup.py
+- [ ] Handle "MoreComments"
 - [x] Add comments to database
 
 ## Issues 
-* PRAW limited to last 1000 items.
+* ~~PRAW limited to last 1000 items~~.
 * Potential for multiple tickers within comments.
 
 ## Getting Started

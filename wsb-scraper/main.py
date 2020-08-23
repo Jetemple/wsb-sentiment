@@ -20,34 +20,6 @@ TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
-class Ticker:
-    def __init__(self, ticker):
-        self.ticker = ticker
-        self.count = 0
-        self.bodies = []
-        self.pos_count = 0
-        self.neg_count = 0
-        self.bullish = 0
-        self.bearish = 0
-        self.neutral = 0
-        self.sentiment = 0  # 0 is neutral
-
-    def analyze_sentiment(self):
-        analyzer = SentimentIntensityAnalyzer()
-        neutral_count = 0
-        for text in self.bodies:
-            sentiment = analyzer.polarity_scores(text)
-            if (sentiment["compound"] > .005) or (sentiment["pos"] > abs(sentiment["neg"])):
-                self.pos_count += 1
-            elif (sentiment["compound"] < -.005) or (abs(sentiment["neg"]) > sentiment["pos"]):
-                self.neg_count += 1
-            else:
-                neutral_count += 1
-        self.bullish = int(self.pos_count / len(self.bodies) * 100)
-        self.bearish = int(self.neg_count / len(self.bodies) * 100)
-        self.neutral = int(neutral_count / len(self.bodies) * 100)
-
-
 
 def analyze_sentiment(text):
     analyzer = SentimentIntensityAnalyzer()
@@ -98,20 +70,13 @@ def analyze_text(item):
         if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
             # Checks to see if the ticker has been cached.
             sentiment = analyze_sentiment(text)
-            if (word in ticker_dict):
-                ticker_dict[word].count += 1
-                ticker_dict[word].bodies.append(text)
-            else:
-                ticker_dict[word] = Ticker(word)
-                ticker_dict[word].count = 1
-                ticker_dict[word].bodies.append(text)
             dbm.addTicker(word)
             if not(post or isDict):
                 dbm.addComment(id,time,word, item.link_id, text, sentiment)
             elif not(post):
                 # print(id)
                 dbm.addComment(id,time,word, item['parent_id'], text, sentiment)
-    return ticker_dict
+    # return ticker_dict
 
 
 def crawl_subreddit(subreddit):
@@ -127,21 +92,22 @@ def crawl_subreddit(subreddit):
         seen = dbm.checkPost(submission.id)
         if not (seen and submission.num_comments<1000):
             dbm.addPost(submission.id, submission.num_comments, submission.created_utc)
-            ticker_dict = analyze_text(submission)
-            old = False
+            analyze_text(submission)
         count = dbm.getCommentCount(submission)
         if(seen and count == submission.num_comments):
             continue
                         
         # Parses post comments
         for comment in submission.comments.list():
+            if(type(comment)==praw.models.reddit.more.MoreComments):
+                continue
             if (submission.num_comments > 999):
                 large_threads.append(submission.id)
                 print(submission.id)
                 break
             if not(dbm.checkComment(comment.id)):
-                continue
-                # ticker_dict = analyze_text(comment)
+                # continue
+                analyze_text(comment)
 
 def getLarge(threadId, cutoff):
     url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
@@ -174,10 +140,6 @@ for t in large_threads:
         cutoff = getLarge(t,cutoff)
 
 
-count = {}
-# for ticker in ticker_dict:
-#     ticker_dict[ticker].analyze_sentiment()
-#     count[ticker] = ticker_dict[ticker].count
 
 # print("Stock \t Count \t Bullish \t Neutral \t Bearish")
 # for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
