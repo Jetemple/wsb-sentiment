@@ -15,9 +15,9 @@ import sqlConnect as dbm
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
+# TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
+# SUBREDDIT = 'wallstreetbets'
 
-TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
-SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
 
@@ -43,10 +43,10 @@ tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 
 # Checks to see if there are tickers in the word
 def analyze_text(item):
-    post = type(item) == praw.models.reddit.submission.Submission
+    isPost = type(item) == praw.models.reddit.submission.Submission
     isDict = type(item) == dict
-    awards = ''
-    if(post):
+    # awards = ''
+    if(isPost):
         text = item.title
         text = text + (item.selftext)
         time = item.created_utc
@@ -65,12 +65,10 @@ def analyze_text(item):
         score = item.score
         # awards = item.all_awardings
 
-    print(awards)
-    
-    
     for word in text.split():
         word = word.rstrip(punctuation)
-
+        
+        # Tickers of len<2 do not exist
         if (len(word) < 3):
             continue
  
@@ -79,12 +77,11 @@ def analyze_text(item):
             # Checks to see if the ticker has been cached.
             sentiment = analyze_sentiment(text)
             dbm.addTicker(word)
-            if not(post or isDict):
+            if not(isPost or isDict): # Add comment to DB from PRAW 
                 dbm.addComment(id,time,word, item.link_id, text, sentiment, score)
-            elif not(post):
+            elif not(isPost): # Add comment to DB from pushshift
                 # print(id)
                 dbm.addComment(id,time,word, item['parent_id'], text, sentiment, score)
-    # return ticker_dict
 
 
 def crawl_subreddit(subreddit):
@@ -106,16 +103,20 @@ def crawl_subreddit(subreddit):
             continue
                         
         # Parses post comments
-        for comment in submission.comments.list():
-            if(type(comment)==praw.models.reddit.more.MoreComments):
-                continue
-            if (submission.num_comments > 999):
-                large_threads.append(submission.id)
-                print(submission.id)
-                break
-            if not(dbm.checkComment(comment.id)):
-                # continue
-                analyze_text(comment)
+        try:
+            for comment in submission.comments.list():
+                # if(type(comment)==praw.models.reddit.more.MoreComments):
+                #     continue
+                if (submission.num_comments > 999):
+                    large_threads.append(submission.id)
+                    print(submission.id)
+                    break
+                if not(dbm.checkComment(comment.id)):
+                    # continue
+                    analyze_text(comment)
+        except:
+            pass
+        
 
 def getLarge(threadId, cutoff):
     url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
@@ -135,21 +136,27 @@ def getLarge(threadId, cutoff):
         return cutoff
     return -1
 
-                
+def largeLoop():
+    print("Start Large Threads")
+    for t in large_threads:
+        print(t)
+        cutoff = 0
+        while(cutoff != -1):
+            cutoff = getLarge(t,cutoff)
 
-a = time.time()
-# large_threads = ['ie47ug','hzy6my','i0ji8h'] # Test large threads. Should be 12901 comments
-crawl_subreddit("wallstreetbets")
-print("Start Large Threads")
-for t in large_threads:
-    print(t)
-    cutoff = 0
-    while(cutoff != -1):
-        cutoff = getLarge(t,cutoff)
+def main():
+    # large_threads = ['ie47ug','hzy6my','i0ji8h'] # Test large threads. Should be 12901 comments
+    crawl_subreddit("wallstreetbets")
+
+if __name__ == "__main__":
+    TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
+    SUBREDDIT = 'wallstreetbets'
+    a = time.time()
+    main()
+    print(time.time()-a)
 
 
 
 # print("Stock \t Count \t Bullish \t Neutral \t Bearish")
 # for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
     # print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
-print(time.time()-a)
