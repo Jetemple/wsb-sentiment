@@ -16,7 +16,7 @@ sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
 
-TIME_PERIOD = 60 * 60 * 24# How far you want to go back in the subreddit
+TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
 SUBREDDIT = 'wallstreetbets'
 
 a = time.time()
@@ -135,12 +135,13 @@ def crawl_subreddit(subreddit):
                         
         # Parses post comments
         for comment in submission.comments.list():
-            if isinstance(comment, MoreComments):
+            if (submission.num_comments > 999):
                 large_threads.append(submission.id)
-                print("isue?")
+                print(submission.id)
                 break
             if not(dbm.checkComment(comment.id)):
-                ticker_dict = analyze_text(comment)
+                continue
+                # ticker_dict = analyze_text(comment)
 
 def getLarge(threadId, cutoff):
     url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
@@ -163,6 +164,7 @@ def getLarge(threadId, cutoff):
                 
 
 a = time.time()
+# large_threads = ['ie47ug','hzy6my','i0ji8h'] # Test large threads. Should be 12901 comments
 crawl_subreddit("wallstreetbets")
 print("Start Large Threads")
 for t in large_threads:
@@ -177,7 +179,7 @@ count = {}
 #     ticker_dict[ticker].analyze_sentiment()
 #     count[ticker] = ticker_dict[ticker].count
 
-print("Stock \t Count \t Bullish \t Neutral \t Bearish")
-for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
-    print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
+# print("Stock \t Count \t Bullish \t Neutral \t Bearish")
+# for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
+    # print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
 print(time.time()-a)
