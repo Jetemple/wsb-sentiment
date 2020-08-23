@@ -10,7 +10,7 @@ import sys
 import yfinance as yf
 import requests
 from string import punctuation
-import dbm
+import sqlConnect as dbm
 
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
@@ -45,19 +45,27 @@ tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 def analyze_text(item):
     post = type(item) == praw.models.reddit.submission.Submission
     isDict = type(item) == dict
+    awards = ''
     if(post):
         text = item.title
         text = text + (item.selftext)
         time = item.created_utc
         id = item.id
+        score = item.score
+        # awards = item.all_awardings
     elif(isDict):
         text = item['body']
         id = item['id']
         time = item['created_utc']
+        score = item['score']
     else:
         text = item.body
         time = item.created_utc
         id = item.id
+        score = item.score
+        # awards = item.all_awardings
+
+    print(awards)
     
     
     for word in text.split():
@@ -72,10 +80,10 @@ def analyze_text(item):
             sentiment = analyze_sentiment(text)
             dbm.addTicker(word)
             if not(post or isDict):
-                dbm.addComment(id,time,word, item.link_id, text, sentiment)
+                dbm.addComment(id,time,word, item.link_id, text, sentiment, score)
             elif not(post):
                 # print(id)
-                dbm.addComment(id,time,word, item['parent_id'], text, sentiment)
+                dbm.addComment(id,time,word, item['parent_id'], text, sentiment, score)
     # return ticker_dict
 
 
