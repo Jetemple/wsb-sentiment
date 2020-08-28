@@ -25,8 +25,8 @@ Comment.create = (newCustomer, result) => {
   });
 };
 
-Comment.findById = (customerId, result) => {
-  sql.query(`SELECT * FROM comments WHERE id = ${customerId}`, (err, res) => {
+Comment.findByTicker = (customerId, result) => {
+  sql.query(`SELECT * FROM comments WHERE ticker = "${customerId}"`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -34,8 +34,8 @@ Comment.findById = (customerId, result) => {
     }
 
     if (res.length) {
-      console.log("found comment: ", res[0]);
-      result(null, res[0]);
+      console.log("found comment: ", res);
+      result(null, res);
       return;
     }
 
@@ -43,6 +43,48 @@ Comment.findById = (customerId, result) => {
     result({ kind: "not_found" }, null);
   });
 };
+
+Comment.tickerDateRange = (ticker, frontDate, backDate, result) => {
+  sql.query(`SELECT * FROM comments WHERE ticker = "${ticker}" AND comment_date BETWEEN ${frontDate} AND ${backDate}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    if (res.length) {
+      console.log("found comment: ", res);
+      result(null, res);
+      return;
+    }
+
+    // not found Comment with the id
+    result({ kind: "none_in_date" }, null);
+  });
+};
+
+Comment.getID = (id, result) => {
+  sql.query(`SELECT * FROM comments WHERE comment_id = "${id}"`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    if (res.length) {
+      console.log("found comment: ", res);
+      result(null, res);
+      return;
+    }
+
+    // not found Comment with the id
+    result({ kind: "not_found" }, null);
+  });
+
+}
+
+
+
 
 Comment.getAll = result => {
   sql.query("SELECT * FROM comments", (err, res) => {

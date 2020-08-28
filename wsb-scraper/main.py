@@ -53,7 +53,7 @@ def analyze_text(item):
         time = item.created_utc
         id = item.id
         score = item.score
-        parent = "2323"
+        parent = item.id
         # awards = item.all_awardings
     elif(isDict):
         text = item['body']
@@ -66,18 +66,9 @@ def analyze_text(item):
         time = item.created_utc
         id = item.id
         score = item.score
-        parent = item.link_id
+        parent = item.link_id[3:]
         # awards = item.all_awardings
-    data = {
-	"comment_id" : id,
-	"comment_date" : time,
-	"ticker" : "TEST",
-	"parent_post" : parent,
-	"body" : text,
-	"score" : score,
-	"sentiment" : "Bullish"
-	
-        }
+    
 
     for word in text.split():
         word = word.rstrip(punctuation)
@@ -90,6 +81,15 @@ def analyze_text(item):
         if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
             # Checks to see if the ticker has been cached.
             sentiment = analyze_sentiment(text)
+            data = {
+                "comment_id" : id,
+                "comment_date" : time,
+                "ticker" : word,
+                "parent_post" : parent,
+                "body" : text,
+                "score" : score,
+                "sentiment" : sentiment
+                  }
             r = requests.post(url = BASE_URL, data = data)
             pastebin_url = r.text 
             print(pastebin_url)

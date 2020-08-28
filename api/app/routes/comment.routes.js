@@ -7,8 +7,8 @@ module.exports = app => {
     // Retrieve all comments
     app.get("/comments", comments.findAll);
   
-    // Retrieve a single Customer with customerId
-    app.get("/comments/:customerId", comments.findOne);
+    // Retrieve all occurances of that ticker 
+    app.get("/comments/:ticker", comments.getTicker);
   
     // Update a Customer with customerId
     app.put("/comments/:customerId", comments.update);
@@ -18,4 +18,9 @@ module.exports = app => {
   
     // Create a new Customer
     app.delete("/comments", comments.deleteAll);
+    
+    // get range of comments by ticker and date
+    app.get("/comments/:ticker/:frontDate/:backDate", comments.tickerDate); 
+    // get range of comments by ticker and date
+    app.get("/id/:postID", comments.postID);
   };
