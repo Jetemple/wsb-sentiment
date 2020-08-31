@@ -68,7 +68,6 @@ def analyze_text(item):
         score = item.score
         parent = item.link_id[3:]
         # awards = item.all_awardings
-    
 
     for word in text.split():
         word = word.rstrip(punctuation)
@@ -85,6 +84,7 @@ def analyze_text(item):
             if(r.status_code == 200):
                 continue
             sentiment = analyze_sentiment(text)
+            print(score)
             data = {
                 "comment_id" : id,
                 "comment_date" : time,

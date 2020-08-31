@@ -16,8 +16,9 @@ exports.create = (req, res) => {
     ticker: req.body.ticker,
     parent_post: req.body.parent_post,
     body: req.body.body,
+    score: req.body.score,
     sentiment: req.body.sentiment,
-    score: req.body.comment_id,
+    
     // charset : 'utf8mb4'
   });
 
