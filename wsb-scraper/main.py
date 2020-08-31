@@ -80,6 +80,10 @@ def analyze_text(item):
         # Does word fit the ticker criteria
         if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
             # Checks to see if the ticker has been cached.
+            url = "http://localhost:3000/id/" + id
+            r = requests.get(url= url)
+            if(r.status_code == 200):
+                continue
             sentiment = analyze_sentiment(text)
             data = {
                 "comment_id" : id,
@@ -91,14 +95,6 @@ def analyze_text(item):
                 "sentiment" : sentiment
                   }
             r = requests.post(url = BASE_URL, data = data)
-            pastebin_url = r.text 
-            print(pastebin_url)
-            # dbm.addTicker(word)
-            # if not(isPost or isDict): # Add comment to DB from PRAW 
-            #     dbm.addComment(id,time,word, item.link_id, text, sentiment, score)
-            # elif not(isPost): # Add comment to DB from pushshift
-            #     # print(id)
-            #     dbm.addComment(id,time,word, item['parent_id'], text, sentiment, score)
 
 
 def crawl_subreddit(subreddit):
