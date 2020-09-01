@@ -15,12 +15,12 @@ def sql_connection():
         print(Error)
 
 
-def addComment(id, date, ticker, post, body, sentiment):
+def addComment(id, date, ticker, post, body, sentiment, score):
     try:
         post = post[3:]
         con = sql_connection()
         cursorObj = con.cursor()
-        cursorObj.execute("INSERT INTO comments VALUES (?, ?, ?, ?, ?, ?)",(id, date, ticker, post, body, sentiment))
+        cursorObj.execute("INSERT INTO comments VALUES (?, ?, ?, ?, ?, ?, ?)",(id, date, ticker, post, body, sentiment, score))
         con.commit()
     except Exception as e:
         pass
