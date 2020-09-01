@@ -158,7 +158,6 @@ def largeLoop():
             cutoff = getLarge(t,cutoff)
 
 def main():
-    # large_threads = ['ie47ug','hzy6my','i0ji8h'] # Test large threads. Should be 12901 comments
     crawl_subreddit("wallstreetbets")
 
 if __name__ == "__main__":
@@ -167,9 +166,3 @@ if __name__ == "__main__":
     a = time.time()
     main()
     print(time.time()-a)
-
-
-
-# print("Stock \t Count \t Bullish \t Neutral \t Bearish")
-# for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
-    # print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)

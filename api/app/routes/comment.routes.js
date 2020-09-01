@@ -1,7 +1,7 @@
 module.exports = app => {
     const comments = require("../controllers/comment.controller.js");
   
-    // Create a new Customer
+    // Create a new comment
     app.post("/comments", comments.create);
   
     // Retrieve all comments
@@ -10,17 +10,9 @@ module.exports = app => {
     // Retrieve all occurances of that ticker 
     app.get("/comments/:ticker", comments.getTicker);
   
-    // Update a Customer with customerId
-    app.put("/comments/:customerId", comments.update);
-  
-    // Delete a Customer with customerId
-    app.delete("/comments/:customerId", comments.delete);
-  
-    // Create a new Customer
-    app.delete("/comments", comments.deleteAll);
-    
-    // get range of comments by ticker and date
+    // Retrieve range of comments by ticker and date
     app.get("/comments/:ticker/:frontDate/:backDate", comments.tickerDate); 
-    // get range of comments by ticker and date
+
+    // Retrieve comment by commend ID
     app.get("/id/:postID", comments.postID);
   };
