@@ -6,6 +6,7 @@ sql-queries/
 *.db
 symbols.txt
 .vscode
+api/app/config/db.config.js
 
 
 # Byte-compiled / optimized / DLL files

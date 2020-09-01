@@ -43,6 +43,7 @@ tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
 
 # Checks to see if there are tickers in the word
 def analyze_text(item):
+    BASE_URL = "http://localhost:3000/comments"
     isPost = type(item) == praw.models.reddit.submission.Submission
     isDict = type(item) == dict
     # awards = ''
@@ -52,17 +53,20 @@ def analyze_text(item):
         time = item.created_utc
         id = item.id
         score = item.score
+        parent = item.id
         # awards = item.all_awardings
     elif(isDict):
         text = item['body']
         id = item['id']
         time = item['created_utc']
         score = item['score']
+        parent = item['parent_id']
     else:
         text = item.body
         time = item.created_utc
         id = item.id
         score = item.score
+        parent = item.link_id[3:]
         # awards = item.all_awardings
 
     for word in text.split():
@@ -75,13 +79,22 @@ def analyze_text(item):
         # Does word fit the ticker criteria
         if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
             # Checks to see if the ticker has been cached.
+            url = "http://localhost:3000/id/" + id
+            r = requests.get(url= url)
+            if(r.status_code == 200):
+                continue
             sentiment = analyze_sentiment(text)
-            dbm.addTicker(word)
-            if not(isPost or isDict): # Add comment to DB from PRAW 
-                dbm.addComment(id,time,word, item.link_id, text, sentiment, score)
-            elif not(isPost): # Add comment to DB from pushshift
-                # print(id)
-                dbm.addComment(id,time,word, item['parent_id'], text, sentiment, score)
+            print(score)
+            data = {
+                "comment_id" : id,
+                "comment_date" : time,
+                "ticker" : word,
+                "parent_post" : parent,
+                "body" : text,
+                "score" : score,
+                "sentiment" : sentiment
+                  }
+            r = requests.post(url = BASE_URL, data = data)
 
 
 def crawl_subreddit(subreddit):
