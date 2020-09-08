@@ -1,6 +1,7 @@
 module.exports = {
-    HOST: "SQL_DB_ADDRESS",
-    USER: "DB_USERNAME",
-    PASSWORD: "DB_PASSWORD",
-    DB: "DATABASE_NAME"
+    HOST: process.env.HOST || "$HOSTNAME",
+    USER: process.env.USER || "$USER",
+    PASSWORD: process.env.PASSWORD || "$PASSWORD",
+    PORT: process.env.PORT || "$PORT",
+    DB: process.env.DB || "$DATABASE"
   };
