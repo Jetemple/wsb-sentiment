@@ -11,6 +11,7 @@ const Post = function(post) {
   this.guildings = post.guildings;
   this.flair = post.flair;
   this.ticker = post.ticker;
+  this.title = post.title;
   this.body = post.body;
   this.sentiment = post.sentiment;
   

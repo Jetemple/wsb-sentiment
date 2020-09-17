@@ -19,6 +19,7 @@ exports.create = (req, res) => {
     guildings: req.body.guildings,
     flair: req.body.flair,
     ticker: req.body.ticker,
+    title: req.body.title,
     body: req.body.body,
     sentiment: req.body.sentiment,
     // charset : 'utf8mb4'
