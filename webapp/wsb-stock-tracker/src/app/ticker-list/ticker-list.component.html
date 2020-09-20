@@ -1,0 +1,22 @@
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th>Mentions</th>
+                <th>Sentiment</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let ticker of tickerArr; let i=index;">
+                <td>{{ i+1 }}</td>
+                <td>{{ ticker.tickerName }}</td>
+                <td>{{ ticker.companyName }}</td>
+                <td>{{ ticker.mentions }}</td>
+                <td>{{ ticker.sentiment }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
