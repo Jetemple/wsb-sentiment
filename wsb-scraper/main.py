@@ -11,91 +11,25 @@ import yfinance as yf
 import requests
 from string import punctuation
 import sqlConnect as dbm
+from datetime import datetime
 
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
 
+import globalLists as gl
+import pushshift as ps
+import sentiment
+
+
 # TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
 # SUBREDDIT = 'wallstreetbets'
 
-
 a = time.time()
-
-def analyze_sentiment(text):
-    analyzer = SentimentIntensityAnalyzer()
-    sentiment = analyzer.polarity_scores(text)
-    if (sentiment["compound"] > .005) or (sentiment["pos"] > abs(sentiment["neg"])):
-        return "Bullish"
-    elif (sentiment["compound"] < -.005) or (abs(sentiment["neg"]) > sentiment["pos"]):
-        return "Bearish"
-    else:
-        return "Neutral"
 
 # Large comment threads
 large_threads=[]
 
-# list of common english words to remove
-common_word_filters = ["SON","USD","IPO","PDT","ATH","ITM","YOLO","EPS","AUG", "CEO", "GOLD", "ALOT", "JAN", "ONCE", "EDIT", "BRO", "SU", "LIFE", "CFO", "JOB", "BIT", "TWO", "BEST", "BIG", "EOD", "HOPE", "AM", "EVER", "PUMP", "NEXT", "HE", "REAL", "WORK", "NICE", "TOO", "MAN", "LOVE", "BY", "VERY", "ANY", "SEE",
-                       "NEW", "WELL", "TELL", "IT", "ONE", "POST", "ON", "TURN", "GOOD", "CAN", "HAS", "GO", "PLAY", "ELSE", "GAIN", "RUN", "INFO", "STAY", "CARE", "ALL", "AT", "PER", "DO", "ARE", "NOW", "BE", "OR", "SO", "OUT", "BEAT", "AGO", "AN", "PEAK", "LOW", "DD", "FOR", "FLAT"]
-
 ticker_dict = {} # Holds all of the tickers
-tickers = open("symbols.txt").read().splitlines()# Holds all of the tickers
-
-# Checks to see if there are tickers in the word
-def analyze_text(item):
-    BASE_URL = "http://localhost:3000/comments"
-    isPost = type(item) == praw.models.reddit.submission.Submission
-    isDict = type(item) == dict
-    # awards = ''
-    if(isPost):
-        text = item.title
-        text = text + (item.selftext)
-        time = item.created_utc
-        id = item.id
-        score = item.score
-        parent = item.id
-        # awards = item.all_awardings
-    elif(isDict):
-        text = item['body']
-        id = item['id']
-        time = item['created_utc']
-        score = item['score']
-        parent = item['parent_id']
-    else:
-        text = item.body
-        time = item.created_utc
-        id = item.id
-        score = item.score
-        parent = item.link_id[3:]
-        # awards = item.all_awardings
-
-    for word in text.split():
-        word = word.rstrip(punctuation)
-        
-        # Tickers of len<2 do not exist
-        if (len(word) < 3):
-            continue
- 
-        # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
-            # Checks to see if the ticker has been cached.
-            url = "http://localhost:3000/id/" + id
-            r = requests.get(url= url)
-            if(r.status_code == 200):
-                continue
-            sentiment = analyze_sentiment(text)
-            print(score)
-            data = {
-                "comment_id" : id,
-                "comment_date" : time,
-                "ticker" : word,
-                "parent_post" : parent,
-                "body" : text,
-                "score" : score,
-                "sentiment" : sentiment
-                  }
-            r = requests.post(url = BASE_URL, data = data)
-
 
 def crawl_subreddit(subreddit):
     # Create praw connection
@@ -110,7 +44,8 @@ def crawl_subreddit(subreddit):
         seen = dbm.checkPost(submission.id)
         if not (seen and submission.num_comments<1000):
             dbm.addPost(submission.id, submission.num_comments, submission.created_utc)
-            analyze_text(submission)
+    
+            sentiment.analyze_text(submission)
         count = dbm.getCommentCount(submission)
         if(seen and count == submission.num_comments):
             continue
@@ -126,50 +61,24 @@ def crawl_subreddit(subreddit):
                     break
                 if not(dbm.checkComment(comment.id)):
                     # continue
-                    analyze_text(comment)
-        except:
-            pass
-        
+                    sentiment.analyze_text(comment)
 
-def getLarge(threadId, cutoff):
-    url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
-    if (cutoff != 0):
-        url = str(url) + "&before="+str(cutoff)
-    # print(url)
-    r = requests.get(url)
-    # print(r)
-    data = r.json()
-    count = 0
-    for d in data['data']:
-        # print(d['id'])
-        analyze_text(d)
-        count += 1
-        cutoff = d['created_utc']
-    if(count == 20000):
-        return cutoff
-    return -1
+        except Exception as e:
+            print(e)
+        last_time = submission.created_utc
+    return last_time
 
-def largeLoop():
-    print("Start Large Threads")
-    for t in large_threads:
-        print(t)
-        cutoff = 0
-        while(cutoff != -1):
-            cutoff = getLarge(t,cutoff)
 
 def main():
-    # large_threads = ['ie47ug','hzy6my','i0ji8h'] # Test large threads. Should be 12901 comments
-    crawl_subreddit("wallstreetbets")
+    # pickup = crawl_subreddit("wallstreetbets")
+    pickup = time.time()
+    ps.getHistory(pickup)
+    ps.largeLoop(large_threads)
+
 
 if __name__ == "__main__":
-    TIME_PERIOD = 60 * 60 * 1000# How far you want to go back in the subreddit
+    TIME_PERIOD = 60 * 60 * 1000 # How far you want to go back in the subreddit
     SUBREDDIT = 'wallstreetbets'
     a = time.time()
     main()
     print(time.time()-a)
-
-
-
-# print("Stock \t Count \t Bullish \t Neutral \t Bearish")
-# for key, value in sorted(count.items(), key=lambda x: x[1], reverse=True):
-    # print(key, "\t", value , "\t" ,ticker_dict[key].bullish , "\t\t", ticker_dict[key].neutral , "\t\t", ticker_dict[key].bearish)
