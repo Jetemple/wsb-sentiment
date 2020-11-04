@@ -22,16 +22,28 @@ These instructions will get you a copy of the project up and running on your loc
 
 
 ### Prerequisites
+* Docker-compose 
+* Python 3.8.3
 
 ```
+cd wsb-scraper
 pip install -r requirements.txt
+```
+
+### Running app 
+```
+# Starts MySQL DB and Node server 
+docker-compose up --build
+# Run Scraper in other terminal window
+cd wsb-scraper
+python main.py
 ```
 
 
 ## Built With
 
 * ***Future*** : [VaderSentiment](https://github.com/cjhutto/vaderSentiment) - Used to determine if comment of ticker is Bullish or Bearish. *(Tweaked with personal rules)*
-* SQLITE3
+* MySQL
 
 ## Contributing
 
