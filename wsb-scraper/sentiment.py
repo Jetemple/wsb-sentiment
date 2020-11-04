@@ -10,13 +10,16 @@ import sys
 import yfinance as yf
 import requests
 from string import punctuation
-import sqlConnect as dbm
 from datetime import datetime
 
 import globalLists as gl
 
 sys.path.insert(0, 'vaderSentiment/vaderSentiment')
 from vaderSentiment import SentimentIntensityAnalyzer
+
+
+BASE_URL = config.BASE_URL
+
 
 def analyze_sentiment(text):
     analyzer = SentimentIntensityAnalyzer()
@@ -30,11 +33,12 @@ def analyze_sentiment(text):
 
 
 def analyze_text(item):
-    BASE_URL = "http://localhost:3000/comments"
+    # BASE_URL = "http://localhost:3000/comments"
     isPost = type(item) == praw.models.reddit.submission.Submission
     isDict = type(item) == dict
     # awards = ''
     if(isPost):
+        addPost(item)
         text = item.title
         text = text + (item.selftext)
         time = item.created_utc
@@ -66,14 +70,14 @@ def analyze_text(item):
             continue
 
         # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in gl.common_word_filters) and len(word) <= 5 and word.isalpha() and (word.upper() in tickers):
+        if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
             # Checks to see if the ticker has been cached.
-            url = "http://localhost:3000/id/" + id
-            r = requests.get(url= url)
+            # url = "http://localhost:3000/id/" + id
+            r = requests.get(url= BASE_URL + "/id/" + id)
             if(r.status_code == 200):
                 continue
             sentiment = analyze_sentiment(text)
-            print(score)
+            # print(score)
             data = {
                 "comment_id" : id,
                 "comment_date" : time,
@@ -83,4 +87,32 @@ def analyze_text(item):
                 "score" : score,
                 "sentiment" : sentiment
                 }
-            r = requests.post(url = BASE_URL, data = data)
+            r = requests.post(url = BASE_URL+"/comments", data = data)
+            
+def addPost(item):
+    BASE_URL = "http://localhost:3000/posts"
+    numAwards = len(item.all_awardings)
+    # for award in item.all_awardings:
+    #     print(award["name"])
+    data = {
+	"post_id" : item.id,
+	"post_date" : item.created_utc,
+	"num_comments" : item.num_comments,
+	"score" : item.score,
+	"upvote_ratio" : item.upvote_ratio,
+	"guildings" : numAwards,
+	"flair" : item.link_flair_text,
+	"author" : item.author,
+	"ticker" : 'FAKE_TICKER',
+	"title" : item.title,
+	"body" : item.selftext,
+	"sentiment" : "TODO"
+    }
+
+    print(data)
+
+    r = requests.post(url = BASE_URL, data = data)
+    # for award in item.all_awardings:
+    #     print(award["name"])
+    # print(item.all_awardings)
+    # print(data)

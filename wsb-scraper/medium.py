@@ -10,17 +10,19 @@ import sys
 import yfinance as yf
 import requests
 from string import punctuation
-import sqlConnect as dbm
 from datetime import datetime
 
 import sentiment
 import globalLists as gl
 # gl.init()
 
+BASE_URL = config.BASE_URL
+
 
 def getLargeThread(threadId, cutoff):
     url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
     print(url)
+    
     if (cutoff != 0):
         url = str(url) + "&before="+str(cutoff)
     # print(url)
@@ -51,26 +53,15 @@ def getPushshift(thread):
     except Exception as e:
         print(e)
 
-def addPost(this):
-    BASE_URL = "http://localhost:3000/posts"
+def addPost(post):
+    # Initial Values
     ticker = "N/A"
-    guildings = "none"
-    upvote_ratio = "0.0"
-    flair = "none"
-    body = " "
+    isDict = type(post) == dict
+    title = post.get("title")if isDict else post.title
 
-    if this.get("upvote_ratio") != None:
-        upvote_ratio = this.get("upvote_ratio")
-
-    if this.get("selftext") != None:
-            body = this.get("selftext")
-
-    if this.get("link_flair_text") != None:
-        flair = this.get("link_flair_text")
-    
-    if this.get("guildings") != None:
-        guildings = this.get("guildings")
-    for word in this.get("title").split():
+    # Finds the ticker in the title
+    for word in title.split():
+        print(word)
         word = word.strip(punctuation)
         word = word.upper()
         if gl.ALTERNATE_SPELLING.get(word) != None:
@@ -78,39 +69,46 @@ def addPost(this):
             print(word)
         if (len(word) < 2):
             continue
-
-
         # Does word fit the ticker criteria
         if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
             ticker = word
             break
 
-    for word in this.get("selftext").split():
-        if(ticker != "NONE"):
-            break
-        word = word.strip(punctuation)
-        if (len(word) < 2):
-            continue
- 
-        # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
-            ticker = word
-            break
-    data = {
-	"post_id" : this.get("id"),
-	"post_date" : this.get("created_utc"),
-	"num_comments" : this.get("num_comments"),
-	"score" : this.get("score"),
-	"upvote_ratio" : upvote_ratio,
-	"guildings" : guildings,
-	"flair" : flair,
-	"author" : this.get("author"),
-	"ticker" : ticker,
-	"title" : this.get("title"),
-	"body" : body,
-	"sentiment" : "TODO"
-    }
-    r = requests.post(url = BASE_URL, data = data)
+    if isDict:
+        data = {
+        "post_id" : post.get("id"),
+        "post_date" : post.get("created_utc"),
+        "num_comments" : post.get("num_comments"),
+        "score" : post.get("score"),
+        "upvote_ratio" : post.get("upvote_ratio") if post.get("upvote_ratio") != None else "-1",
+        "guildings" : post.get("guildings") if post.get("guildings") != None else 0,
+        "flair" : post.get("link_flair_text") if post.get("link_flair_text") != None else "none",
+        "author" : post.get("author"),
+        "ticker" : ticker,
+        "title" : title,
+        "body" : post.get("selftext") if post.get("selftext") != None else " ",
+        "sentiment" : "TODO"
+        }
+    else:
+        print("PRAW")
+        numAwards = len(post.all_awardings)
+        data = {
+        "post_id" : post.id,
+        "post_date" : int(post.created_utc),
+        "num_comments" : post.num_comments,
+        "score" : post.score,
+        "upvote_ratio" : post.upvote_ratio,
+        "guildings" : numAwards,
+        "flair" : post.link_flair_text if post.link_flair_text != None else "None",
+        "author" : post.author,
+        "ticker" : ticker,
+        "title" : post.title,
+        "body" : post.selftext,
+        "sentiment" : "TODO"
+        }
+    print(data)
+    r = requests.post(url = BASE_URL+"/posts", data = data)
+    
 
 def largeLoop(large_threads):
     print("Start Large Threads")
