@@ -12,46 +12,13 @@ import requests
 from string import punctuation
 from datetime import datetime
 
-import sentiment
+import sentiment as s
 import globalLists as gl
-# gl.init()
 
 BASE_URL = config.BASE_URL
-
-
-def getLargeThread(threadId, cutoff):
-    url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
-    print(url)
-    
-    if (cutoff != 0):
-        url = str(url) + "&before="+str(cutoff)
-    # print(url)
-    r = requests.get(url)
-    # print(r)
-    data = r.json()
-    count = 0
-    for d in data['data']:
-        # print(d['id'])
-        sentiment.analyze_text(d)
-        count += 1
-        cutoff = d['created_utc']
-    if(count == 20000):
-        return cutoff
-    return -1
-
-# May Be depricated
-def getPushshift(thread):
-    try:
-        url = "https://api.pushshift.io/reddit/comment/search/?link_id="+thread+"&limit=100000"
-        print(url)
-        r = requests.get(url)
-        data = r.json()
-        for d in data['data']:
-            a = time.time()
-            sentiment.analyze_text(d)
-            print(time.time()-a)
-    except Exception as e:
-        print(e)
+SUBREDDIT = config.SUBREDDIT
+TIME_PERIOD = config.TIME_PERIOD
+large_threads=[]
 
 def addPost(post):
     # Initial Values
@@ -61,12 +28,10 @@ def addPost(post):
 
     # Finds the ticker in the title
     for word in title.split():
-        print(word)
         word = word.strip(punctuation)
         word = word.upper()
         if gl.ALTERNATE_SPELLING.get(word) != None:
             word = gl.ALTERNATE_SPELLING.get(word)
-            print(word)
         if (len(word) < 2):
             continue
         # Does word fit the ticker criteria
@@ -75,6 +40,7 @@ def addPost(post):
             break
 
     if isDict:
+        print("PUSH")
         data = {
         "post_id" : post.get("id"),
         "post_date" : post.get("created_utc"),
@@ -106,52 +72,51 @@ def addPost(post):
         "body" : post.selftext,
         "sentiment" : "TODO"
         }
-    print(data)
     r = requests.post(url = BASE_URL+"/posts", data = data)
     
+def addComment(comment):
+    # BASE_URL = "http://localhost:3000/comments"
+    isDict = type(comment) == dict
+    # awards = ''
+    if(isDict):
+        text = comment['body']
+        id = comment['id']
+        time = comment['created_utc']
+        score = comment['score']
+        parent = comment['parent_id']
+        if parent.startswith("t"):
+            parent = parent[3:]
+    else:
+        text = comment.body
+        time = comment.created_utc
+        id = comment.id
+        score = comment.score
+        parent = comment.link_id[3:]
+        # awards = item.all_awardings
 
-def largeLoop(large_threads):
-    print("Start Large Threads")
-    for t in large_threads:
-        print(t)
-        cutoff = 0
-        while(cutoff != -1):
-            cutoff = getLargeThread(t,cutoff)
-
-def getHistory(pickup):
-    utc=time.time()-172800 #Pushift.io collects comment data on posts older than 48 hours 
-    # utc=1588197864.2323
-    # utc=pickup
-    a=utc
-    dif = utc - 31557600
-    # dif = utc - (60*60*24*7)
-    print(dif)
-    print(utc)
-    utcS=str(utc)[:str(utc).index('.')]
-    while(dif<utc):
-        try:
-            url ="https://api.pushshift.io/reddit/submission/search/?subreddit=wallstreetbets&sort=desc&after=0&before="+utcS+"&size=1000&user_removed=false&mod_removed=false"
-            r = requests.get(url)
-
-            print(url)
-            data = r.json()
-            for d in data['data']:
-                cutoff = 0
-                if(d.get('removed_by_category')==None):
-                    addPost(d)
-                    # large_threads.append(d.get('id'))
-                    # print(d.get('id'))
-                    # getPushshift(d.get('id'))
-                    # print(d['id'])
-                    # print(d.get('removed_by_category'))
-                    # 
-                # print(d)
-                # print(datetime.utcfromtimestamp(utc).strftime('%Y-%m-%d %H:%M:%S'),d['created_utc'],d['title'])
-                utcS=str(d['created_utc'])
-                utc=d['created_utc']
-                # print(datetime.utcfromtimestamp(utc).strftime('%Y-%m-%d %H:%M:%S'))
-        except Exception as e:
-            print(e)
-
+    for word in text.split():
+        word = word.strip(punctuation)
         
-    print(time.time()-a)
+        # Tickers of len<2 do not exist
+        if (len(word) < 2):
+            continue
+
+        # Does word fit the ticker criteria
+        if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
+            # Checks to see if the ticker has been cached.
+            # url = "http://localhost:3000/id/" + id
+            r = requests.get(url= BASE_URL + "/id/" + id)
+            if(r.status_code == 200):
+                continue
+            sentiment = s.analyze_sentiment(text)
+            # print(score)
+            data = {
+                "comment_id" : id,
+                "comment_date" : time,
+                "ticker" : word,
+                "parent_post" : parent,
+                "body" : text,
+                "score" : score,
+                "sentiment" : sentiment
+                }
+            r = requests.post(url = BASE_URL+"/comments", data = data)

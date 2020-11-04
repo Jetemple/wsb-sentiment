@@ -32,87 +32,50 @@ def analyze_sentiment(text):
         return "Neutral"
 
 
-def analyze_text(item):
-    # BASE_URL = "http://localhost:3000/comments"
-    isPost = type(item) == praw.models.reddit.submission.Submission
-    isDict = type(item) == dict
-    # awards = ''
-    if(isPost):
-        addPost(item)
-        text = item.title
-        text = text + (item.selftext)
-        time = item.created_utc
-        id = item.id
-        score = item.score
-        parent = item.id
-        # awards = item.all_awardings
-    elif(isDict):
-        text = item['body']
-        id = item['id']
-        time = item['created_utc']
-        score = item['score']
-        parent = item['parent_id']
-        if parent.startswith("t"):
-            parent = parent[3:]
-    else:
-        text = item.body
-        time = item.created_utc
-        id = item.id
-        score = item.score
-        parent = item.link_id[3:]
-        # awards = item.all_awardings
+# def analyze_text(item):
+#     # BASE_URL = "http://localhost:3000/comments"
+#     isPost = type(item) == praw.models.reddit.submission.Submission
+#     isDict = type(item) == dict
+#     # awards = ''
+#     if(isDict):
+#         text = item['body']
+#         id = item['id']
+#         time = item['created_utc']
+#         score = item['score']
+#         parent = item['parent_id']
+#         if parent.startswith("t"):
+#             parent = parent[3:]
+#     else:
+#         text = item.body
+#         time = item.created_utc
+#         id = item.id
+#         score = item.score
+#         parent = item.link_id[3:]
+#         # awards = item.all_awardings
 
-    for word in text.split():
-        word = word.strip(punctuation)
+#     for word in text.split():
+#         word = word.strip(punctuation)
         
-        # Tickers of len<2 do not exist
-        if (len(word) < 2):
-            continue
+#         # Tickers of len<2 do not exist
+#         if (len(word) < 2):
+#             continue
 
-        # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
-            # Checks to see if the ticker has been cached.
-            # url = "http://localhost:3000/id/" + id
-            r = requests.get(url= BASE_URL + "/id/" + id)
-            if(r.status_code == 200):
-                continue
-            sentiment = analyze_sentiment(text)
-            # print(score)
-            data = {
-                "comment_id" : id,
-                "comment_date" : time,
-                "ticker" : word,
-                "parent_post" : parent,
-                "body" : text,
-                "score" : score,
-                "sentiment" : sentiment
-                }
-            r = requests.post(url = BASE_URL+"/comments", data = data)
-            
-def addPost(item):
-    BASE_URL = "http://localhost:3000/posts"
-    numAwards = len(item.all_awardings)
-    # for award in item.all_awardings:
-    #     print(award["name"])
-    data = {
-	"post_id" : item.id,
-	"post_date" : item.created_utc,
-	"num_comments" : item.num_comments,
-	"score" : item.score,
-	"upvote_ratio" : item.upvote_ratio,
-	"guildings" : numAwards,
-	"flair" : item.link_flair_text,
-	"author" : item.author,
-	"ticker" : 'FAKE_TICKER',
-	"title" : item.title,
-	"body" : item.selftext,
-	"sentiment" : "TODO"
-    }
-
-    print(data)
-
-    r = requests.post(url = BASE_URL, data = data)
-    # for award in item.all_awardings:
-    #     print(award["name"])
-    # print(item.all_awardings)
-    # print(data)
+#         # Does word fit the ticker criteria
+#         if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
+#             # Checks to see if the ticker has been cached.
+#             # url = "http://localhost:3000/id/" + id
+#             r = requests.get(url= BASE_URL + "/id/" + id)
+#             if(r.status_code == 200):
+#                 continue
+#             sentiment = analyze_sentiment(text)
+#             # print(score)
+#             data = {
+#                 "comment_id" : id,
+#                 "comment_date" : time,
+#                 "ticker" : word,
+#                 "parent_post" : parent,
+#                 "body" : text,
+#                 "score" : score,
+#                 "sentiment" : sentiment
+#                 }
+#             r = requests.post(url = BASE_URL+"/comments", data = data)
