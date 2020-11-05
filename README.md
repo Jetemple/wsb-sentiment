@@ -8,12 +8,17 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 - [ ] Add Changelog
 - [ ] Create Web App 
 - [ ] Create setup.py
+  
+   - Add init SQL scripts 
 - [ ] Handle "MoreComments"
 - [x] Add Award Count
 - [x] Add comments to database
 
+## Thoughts
+* What submissions should I go throgh? 
+  * New/Hot/Top/Controversial/Guilded
+
 ## Issues 
-* PRAW limited to last 1000 items
 * Potential for multiple tickers within comments.
 
 ## Getting Started
