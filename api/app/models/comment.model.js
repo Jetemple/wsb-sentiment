@@ -6,6 +6,7 @@ const Comment = function(comment) {
   this.comment_date = comment.comment_date;
   this.ticker = comment.ticker;
   this.parent_post = comment.parent_post;
+  this.parent_comment = comment.parent_comment;
   this.body = comment.body;
   this.sentiment = comment.sentiment;
   this.score = comment.score;

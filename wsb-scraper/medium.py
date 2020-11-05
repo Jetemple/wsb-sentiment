@@ -83,40 +83,27 @@ def addComment(comment):
         id = comment['id']
         time = comment['created_utc']
         score = comment['score']
-        parent = comment['parent_id']
-        if parent.startswith("t"):
-            parent = parent[3:]
-    else:
+        parent_post = comment['parent_id']
+        if parent_post.startswith("t"):
+            parent_post = parent_post[3:]
+    else: 
         text = comment.body
         time = comment.created_utc
         id = comment.id
         score = comment.score
-        parent = comment.link_id[3:]
+        parent_post = comment.link_id[3:]
+        parent_comment = "top_level" if comment.link_id[3:] == comment.parent_id[3:] else comment.parent_id[3:]
         # awards = item.all_awardings
-
-    for word in text.split():
-        word = word.strip(punctuation)
-        
-        # Tickers of len<2 do not exist
-        if (len(word) < 2):
-            continue
-
-        # Does word fit the ticker criteria
-        if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
-            # Checks to see if the ticker has been cached.
-            # url = "http://localhost:3000/id/" + id
-            r = requests.get(url= BASE_URL + "/id/" + id)
-            if(r.status_code == 200):
-                continue
-            sentiment = s.analyze_sentiment(text)
-            # print(score)
-            data = {
-                "comment_id" : id,
-                "comment_date" : time,
-                "ticker" : word,
-                "parent_post" : parent,
-                "body" : text,
-                "score" : score,
-                "sentiment" : sentiment
-                }
-            r = requests.post(url = BASE_URL+"/comments", data = data)
+    r = requests.get(url= BASE_URL + "/id/" + id)
+    sentiment = s.analyze_sentiment(text)
+    data = {
+        "comment_id" : id,
+        "comment_date" : time,
+        "ticker" : "TEST",
+        "parent_post" : parent_post,
+        "parent_comment" : parent_comment,
+        "body" : text,
+        "score" : score,
+        "sentiment" : sentiment
+        }
+    r = requests.post(url = BASE_URL+"/comments", data = data)

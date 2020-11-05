@@ -15,6 +15,7 @@ exports.create = (req, res) => {
     comment_date: req.body.comment_date,
     ticker: req.body.ticker,
     parent_post: req.body.parent_post,
+    parent_comment: req.body.parent_comment,
     body: req.body.body,
     score: req.body.score,
     sentiment: req.body.sentiment,

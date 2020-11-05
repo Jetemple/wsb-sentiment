@@ -42,12 +42,14 @@ def crawl_subreddit(subreddit):
                             
             # Parses post comments
             m.addPost(submission)
+            if (submission.num_comments > 999):
+                large_threads.append(submission.id)
+                continue    
+            submission.comments.replace_more(limit=999)
             for comment in submission.comments.list():
                 if(type(comment)==praw.models.reddit.more.MoreComments):
+                    print("MORE_COMMENTS")
                     continue
-                if (submission.num_comments > 999):
-                    large_threads.append(submission.id)
-                    break
                 else:  
                     m.addComment(comment)
             last_time = submission.created_utc
