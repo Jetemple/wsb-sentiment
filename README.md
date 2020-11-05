@@ -9,7 +9,7 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 - [ ] Create Web App 
 - [ ] Create setup.py
   
-   - Add init SQL scripts 
+   - [ ] Add init SQL scripts 
 - [ ] Handle "MoreComments"
 - [x] Add Award Count
 - [x] Add comments to database
