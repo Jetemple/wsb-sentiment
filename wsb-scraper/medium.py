@@ -83,16 +83,20 @@ def addComment(comment):
         id = comment['id']
         time = comment['created_utc']
         score = comment['score']
-        parent_post = comment['parent_id']
-        if parent_post.startswith("t"):
-            parent_post = parent_post[3:]
+        parent_post = comment['link_id']
+        parent_comment = "t_0 " if comment['parent_id'] == parent_post else comment['parent_id']
+        # if parent_post.startswith("t"):
+        #     parent_post = parent_post[3:]
+        author = comment['author']
     else: 
         text = comment.body
         time = comment.created_utc
         id = comment.id
         score = comment.score
         parent_post = comment.link_id[3:]
-        parent_comment = "top_level" if comment.link_id[3:] == comment.parent_id[3:] else comment.parent_id[3:]
+        # parent_comment = "top_level" if comment.link_id[3:] == comment.parent_id[3:] else comment.parent_id[3:]
+        parent_comment = "t_0" if comment.link_id == comment.parent_id else comment.parent_id
+        author = comment.author
         # awards = item.all_awardings
     r = requests.get(url= BASE_URL + "/id/" + id)
     sentiment = s.analyze_sentiment(text)
@@ -104,6 +108,7 @@ def addComment(comment):
         "parent_comment" : parent_comment,
         "body" : text,
         "score" : score,
-        "sentiment" : sentiment
+        "sentiment" : sentiment,
+        "author" : author   
         }
     r = requests.post(url = BASE_URL+"/comments", data = data)

@@ -74,7 +74,7 @@ def crawl_subreddit(subreddit):
 
 
 def getLargeThread(threadId, cutoff):
-    url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
+    url = "jq4o82"
     print(url)
     
     if (cutoff != 0):
@@ -140,7 +140,7 @@ def getHistory(pickup):
                     m.addPost(d)
                     # large_threads.append(d.get('id'))
                     # print(d.get('id'))
-                    # getPushshift(d.get('id'))
+                    getPushshift(d.get('id'))
                     # print(d['id'])
                     # print(d.get('removed_by_category'))
                     # 

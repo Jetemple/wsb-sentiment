@@ -10,6 +10,7 @@ const Comment = function(comment) {
   this.body = comment.body;
   this.sentiment = comment.sentiment;
   this.score = comment.score;
+  this.author = comment.author
 };
 
 

@@ -19,6 +19,7 @@ exports.create = (req, res) => {
     body: req.body.body,
     score: req.body.score,
     sentiment: req.body.sentiment,
+    author: req.body.author
     
     // charset : 'utf8mb4'
   });
