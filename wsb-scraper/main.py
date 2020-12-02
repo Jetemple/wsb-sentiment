@@ -8,7 +8,6 @@ def main():
     crawl.crawl_subreddit(SUBREDDIT)
     # crawl.getHistory(pickup)
 
-
 if __name__ == "__main__":
     TIME_PERIOD = 60 * 60 * 60# How far you want to go back in the subreddit
     SUBREDDIT = 'wallstreetbets'

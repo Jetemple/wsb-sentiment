@@ -7,8 +7,7 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 - [ ] Improve VADER Sentiment
 - [ ] Add Changelog
 - [ ] Create Web App 
-- [ ] Create setup.py
-  
+- [ ] Create setup.py 
    - [ ] Add init SQL scripts 
 - [ ] Handle "MoreComments"
 - [x] Add Award Count
