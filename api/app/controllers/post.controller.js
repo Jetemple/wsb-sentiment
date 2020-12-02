@@ -1,4 +1,4 @@
-const Comment = require("../models/comment.model.js");
+const Post = require("../models/post.model.js");
 
 // Create and Save a new Comment
 exports.create = (req, res) => {
@@ -9,27 +9,30 @@ exports.create = (req, res) => {
     });
   }
 
-  // Create a Comment
-  const comment = new Comment({
-    comment_id: req.body.comment_id,
-    comment_date: req.body.comment_date,
-    ticker: req.body.ticker,
-    parent_post: req.body.parent_post,
-    parent_comment: req.body.parent_comment,
-    body: req.body.body,
+  // Create a Post
+  const post = new Post({
+    post_id: req.body.post_id,
+    post_date: req.body.post_date,
+    num_comments: req.body.num_comments,
     score: req.body.score,
+    upvote_ratio: req.body.upvote_ratio,
+    guildings: req.body.guildings,
+    flair: req.body.flair,
+    author: req.body.author,
+    ticker: req.body.ticker,
+    title: req.body.title,
+    body: req.body.body,
     sentiment: req.body.sentiment,
-    author: req.body.author
-    
     // charset : 'utf8mb4'
   });
 
   // Save Comment in the database
-  Comment.create(comment, (err, data) => {
+  Post.create(post, (err, data) => {
     if (err)
       res.status(500).send({
         message:
-          err.message || "Some error occurred while creating the Comment."
+          "Some error occurred while creating the Post."
+          // err.message || "Some error occurred while creating the Post."
       });
     else res.send(data);
   });
@@ -37,7 +40,7 @@ exports.create = (req, res) => {
 
 // Retrieve all Comments from the database.
 exports.findAll = (req, res) => {
-  Comment.getAll((err, data) => {
+  Post.getAll((err, data) => {
     if (err)
       res.status(500).send({
         message:
@@ -49,11 +52,11 @@ exports.findAll = (req, res) => {
 
 // Find a single Comment with a ticker
 exports.getTicker = (req, res) => {
-  Comment.findByTicker(req.params.ticker, (err, data) => {
+    Post.findByTicker(req.params.ticker, (err, data) => {
     if (err) {
       if (err.kind === "not_found") {
         res.status(404).send({
-          message: `No comments of ${req.params.ticker}.`
+          message: `No posts of ${req.params.ticker}.`
         });
       } else {
         res.status(500).send({

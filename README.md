@@ -7,13 +7,17 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 - [ ] Improve VADER Sentiment
 - [ ] Add Changelog
 - [ ] Create Web App 
-- [ ] Create setup.py
-- [x] Handle "MoreComments"
-- [ ] Add Award Count
+- [ ] Create setup.py 
+   - [ ] Add init SQL scripts 
+- [ ] Handle "MoreComments"
+- [x] Add Award Count
 - [x] Add comments to database
 
+## Thoughts
+* What submissions should I go throgh? 
+  * New/Hot/Top/Controversial/Guilded
+
 ## Issues 
-* PRAW limited to last 1000 items (Can be fixed with PushShift) 
 * Potential for multiple tickers within comments.
 
 ## Getting Started
@@ -22,16 +26,28 @@ These instructions will get you a copy of the project up and running on your loc
 
 
 ### Prerequisites
+* Docker-compose 
+* Python 3.8.3
 
 ```
+cd wsb-scraper
 pip install -r requirements.txt
+```
+
+### Running app 
+```
+# Starts MySQL DB and Node server 
+docker-compose up --build
+# Run Scraper in other terminal window
+cd wsb-scraper
+python main.py
 ```
 
 
 ## Built With
 
 * ***Future*** : [VaderSentiment](https://github.com/cjhutto/vaderSentiment) - Used to determine if comment of ticker is Bullish or Bearish. *(Tweaked with personal rules)*
-* SQLITE3
+* MySQL
 
 ## Contributing
 
