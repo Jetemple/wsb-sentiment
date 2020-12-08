@@ -5,6 +5,7 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 ## TODO List 
 
 - [ ] Improve VADER Sentiment
+- [ ] Clean up node.js API error messages
 - [ ] Add Changelog
 - [ ] Create Web App 
 - [ ] Create setup.py 
@@ -19,6 +20,7 @@ This tool is used to parse all of the comments on WSB in the past X time. Counts
 
 ## Issues 
 * Potential for multiple tickers within comments.
+  * Fixed this by adding another database table for tickers.
 
 ## Getting Started
 

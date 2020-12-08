@@ -70,7 +70,7 @@ exports.getTicker = (req, res) => {
 
 
 exports.tickerDate = (req, res) => {
-  Comment.tickerDateRange(req.params.ticker ,req.params.frontDate, req.params.backDate, (err, data) => {
+  Post.tickerDateRange(req.params.ticker ,req.params.frontDate, req.params.backDate, (err, data) => {
     if (err) {
       if (err.kind === "none_in_date") {
         res.status(404).send({
@@ -86,7 +86,23 @@ exports.tickerDate = (req, res) => {
 }
 
 exports.postID = (req, res) => {
-  Comment.getID(req.params.postID, (err,data) => {
+  Post.getID(req.params.postID, (err,data) => {
+    if (err) {
+      if (err.kind === "not_found") {
+        res.status(404).send({
+          message: `ID: ${req.params.postID} found in data.`
+        });
+      } else {
+        res.status(500).send({
+          message: "Error retrieving comments with the ticker " + req.params.ticker
+        });
+      }
+    } else res.send(data);
+  })
+}
+
+exports.postComments = (req, res) => {
+  Post.getID(req.params.postID, (err,data) => {
     if (err) {
       if (err.kind === "not_found") {
         res.status(404).send({

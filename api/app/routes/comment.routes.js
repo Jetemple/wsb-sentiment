@@ -7,12 +7,12 @@ module.exports = app => {
     // Retrieve all comments
     app.get("/comments", comments.findAll);
   
-    // Retrieve all occurances of that ticker 
+    // Retrieve all occurances of that ticker
     app.get("/comments/:ticker", comments.getTicker);
   
     // Retrieve range of comments by ticker and date
     app.get("/comments/:ticker/:frontDate/:backDate", comments.tickerDate); 
 
-    // Retrieve comment by commend ID
-    app.get("/id/:postID", comments.postID);
+    // Retrieve comment by comment ID
+    app.get("/comments/id/:postID", comments.postID);
   };

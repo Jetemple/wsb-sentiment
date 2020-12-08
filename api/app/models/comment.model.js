@@ -28,7 +28,7 @@ Comment.create = (newComment, result) => {
 };
 
 Comment.findByTicker = (ticker, result) => {
-  sql.query(`SELECT * FROM comments WHERE ticker = "${ticker}"`, (err, res) => {
+  sql.query(`SELECT c.* FROM comments c INNER JOIN tickers t ON t.comment_id = c.comment_id WHERE t.symbol = "${ticker}"`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -46,8 +46,30 @@ Comment.findByTicker = (ticker, result) => {
   });
 };
 
+
+Comment.allPostComments = (post_id, result) => {
+  sql.query(`SELECT c.* FROM comments c INNER JOIN posts p ON c.parent_post = p.post_id WHERE p.post_id = "${post_id}"`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    if (res.length) {
+      console.log("found comment: ", res);
+      result(null, res);
+      return;
+    }
+
+    // not found Comment with the id
+    result({ kind: "not_found" }, null);
+  });
+};
+
+
+
 Comment.tickerDateRange = (ticker, frontDate, backDate, result) => {
-  sql.query(`SELECT * FROM comments WHERE ticker = "${ticker}" AND comment_date BETWEEN ${frontDate} AND ${backDate}`, (err, res) => {
+  sql.query(`SELECT c.* FROM comments c INNER JOIN tickers t ON t.comment_id = c.comment_id WHERE t.symbol = "${ticker}" AND t.comment_date BETWEEN ${frontDate} AND ${backDate}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -84,9 +106,6 @@ Comment.getID = (id, result) => {
   });
 
 }
-
-
-
 
 Comment.getAll = result => {
   sql.query("SELECT * FROM comments", (err, res) => {

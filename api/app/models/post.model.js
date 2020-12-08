@@ -73,8 +73,6 @@ Post.getID = (id, result) => {
 }
 
 
-
-
 Post.getAll = result => {
   sql.query("SELECT * FROM posts", (err, res) => {
     if (err) {

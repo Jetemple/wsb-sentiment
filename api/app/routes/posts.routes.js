@@ -1,18 +1,22 @@
 module.exports = app => {
     const posts = require("../controllers/post.controller.js");
+    const comments = require("../controllers/comment.controller.js");
       
-    // Create a new comment
+    // Create a new post
     app.post("/posts", posts.create);
   
-    // Retrieve all comments
+    // Retrieve all post
     app.get("/posts", posts.findAll);
   
-    // Retrieve all occurances of that ticker 
+    // Retrieve all posts that use that ticker 
     app.get("/posts/:ticker", posts.getTicker);
   
-    // Retrieve range of comments by ticker and date
+    // Retrieve range of posts by ticker and date
     app.get("/posts/:ticker/:frontDate/:backDate", posts.tickerDate); 
 
-    // Retrieve comment by commend ID
-    app.get("/id/:postID", posts.postID);
+    // Retrieve post by post ID
+    app.get("/posts/id/:postID", posts.postID);
+
+    // Retrieve all comments from PostID 
+    app.get("/posts/comments/:postID", comments.allPostComments);
   };
