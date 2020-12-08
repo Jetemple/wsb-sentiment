@@ -16,8 +16,9 @@ app.get("/", (req, res) => {
 
 require("./app/routes/comment.routes.js")(app);
 require("./app/routes/posts.routes.js")(app);
+require("./app/routes/ticker.routes.js")(app);
 
-// set port, listen for requests
+// tickeret port, listen for requests
 app.listen(3000, () => {
   console.log("Server is running on port 3000.");
 });
