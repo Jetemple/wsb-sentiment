@@ -3,26 +3,35 @@ const sql = require("./db.js");
 // constructor
 
 const Ticker = function(ticker) {
-  this.symbol = ticker.symbol;
-  this.comment_id = ticker.comment_id;
+  this.ticker = ticker.ticker;
+  this.source_id = ticker.source_id;
 };
 
 
-Ticker.create = (newPost, result) => {
-  sql.query("INSERT IGNORE INTO tickers SET ?", newPost, (err, res) => {
-    if (err) {
-      console.log("error: ", err);
-      result(err, null);
-      return;
-    }
+Ticker.create = (source ,newPost, result) => {
+  if(source == "post" || source == "comment"){
+    console.log("THE CONDITION WORKED")
+    // sql.query(`INSERT INTO tickers SET ?`, newPost, (err, res) => {
+    sql.query(`INSERT INTO tickers_${source}s SET ?`, newPost, (err, res) => {
+      if (err) {
+        console.log("error: ", err);
+        result(err, null);
+        return;
+      }
+  
+      console.log("created comment: ", { id: res.insertId, ...newPost });
+      result(null, { id: res.insertId, ...newPost });
+    });
 
-    console.log("created comment: ", { id: res.insertId, ...newPost });
-    result(null, { id: res.insertId, ...newPost });
-  });
+  }
+  else{
+    return
+  }
 };
 
 Ticker.findByTicker = (ticker, result) => {
-  sql.query(`SELECT * FROM tickers WHERE ticker = "${ticker}"`, (err, res) => {
+  // sql.query(`SELECT * FROM tickers WHERE ticker = "${ticker}"`, (err, res) => {
+  sql.query(`SELECT * FROM tickers_comments tc where ticker = "${ticker}" UNION SELECT * FROM tickers_posts tp where tp.ticker = "${ticker}"`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);

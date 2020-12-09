@@ -11,12 +11,12 @@ exports.create = (req, res) => {
 
   // Create a Post
   const ticker = new Ticker({
-    comment_id: req.body.comment_id,
-    symbol: req.body.symbol,
+    source_id: req.body.source_id,
+    ticker: req.body.ticker,
   });
 
   // Save Comment in the database
-  Ticker.create(ticker, (err, data) => {
+  Ticker.create(req.params.source, ticker, (err, data) => {
     if (err)
       res.status(500).send({
         message:
