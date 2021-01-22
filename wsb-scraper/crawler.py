@@ -7,7 +7,6 @@ import time
 import os
 import logging
 import sys
-import yfinance as yf
 import requests
 from string import punctuation
 from datetime import datetime

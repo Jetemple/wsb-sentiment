@@ -31,3 +31,4 @@ def csv2dict():
     # if "Z" in stocks:
     #     print("HELLO THERE")
     return stocks
+fetch_symbols()
