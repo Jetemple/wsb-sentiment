@@ -19,6 +19,19 @@ from vaderSentiment import SentimentIntensityAnalyzer
 
 BASE_URL = config.BASE_URL
 
+def findTicker(body):
+    # Finds the ticker in the title
+    for word in body.split():
+        word = word.strip(punctuation)
+        word = word.upper()
+        if gl.ALTERNATE_SPELLING.get(word) != None:
+            word = gl.ALTERNATE_SPELLING.get(word)
+        if (len(word) < 2):
+            continue
+        # Does word fit the ticker criteria
+        if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
+            return word
+
 
 def analyze_sentiment(text):
     analyzer = SentimentIntensityAnalyzer()

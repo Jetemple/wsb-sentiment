@@ -7,6 +7,7 @@ import time
 import os
 import logging
 import sys
+import yfinance as yf
 import requests
 from string import punctuation
 from datetime import datetime
@@ -24,10 +25,19 @@ def addPost(post):
     ticker = "N/A"
     isDict = type(post) == dict
     title = post.get("title")if isDict else post.title
-    ticker = s.findTicker(title)
-    if ticker == "N/A":
-        body = post.get("selftext") if isDict else post.selftext
-        ticker = s.findTicker(body)
+
+    # Finds the ticker in the title
+    for word in title.split():
+        word = word.strip(punctuation)
+        word = word.upper()
+        if gl.ALTERNATE_SPELLING.get(word) != None:
+            word = gl.ALTERNATE_SPELLING.get(word)
+        if (len(word) < 2):
+            continue
+        # Does word fit the ticker criteria
+        if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
+            ticker = word
+            break
 
     if isDict:
         print("PUSH")
@@ -73,33 +83,55 @@ def addComment(comment):
         id = comment['id']
         time = comment['created_utc']
         score = comment['score']
-        parent_post = comment['link_id']
-        parent_comment = "t_0 " if comment['parent_id'] == parent_post else comment['parent_id']
-        # if parent_post.startswith("t"):
-        #     parent_post = parent_post[3:]
-        author = comment['author']
-    else: 
+        parent = comment['parent_id']
+        if parent.startswith("t"):
+            parent = parent[3:]
+    else:
         text = comment.body
         time = comment.created_utc
         id = comment.id
         score = comment.score
-        parent_post = comment.link_id[3:]
-        # parent_comment = "top_level" if comment.link_id[3:] == comment.parent_id[3:] else comment.parent_id[3:]
-        parent_comment = "t_0" if comment.link_id == comment.parent_id else comment.parent_id
-        author = comment.author
+        parent = comment.link_id[3:]
         # awards = item.all_awardings
-    ticker = s.findTicker(text)
+
+    # for word in text.split():
+    #     word = word.strip(punctuation)
+        
+    #     # Tickers of len<2 do not exist
+    #     if (len(word) < 2):
+    #         continue
+
+    #     # Does word fit the ticker criteria
+    #     if word.isupper() and len(word) != 1 and (word.upper() not in gl.COMMON_WORDS) and len(word) <= 5 and word.isalpha() and (word.upper() in gl.TICKERS):
+    #         # Checks to see if the ticker has been cached.
+    #         # url = "http://localhost:3000/id/" + id
+    #         r = requests.get(url= BASE_URL + "/id/" + id)
+    #         if(r.status_code == 200):
+    #             continue
+    #         sentiment = s.analyze_sentiment(text)
+    #         # print(score)
+    #         data = {
+    #             "comment_id" : id,
+    #             "comment_date" : time,
+    #             "ticker" : word,
+    #             "parent_post" : parent,
+    #             "body" : text,
+    #             "score" : score,
+    #             "sentiment" : sentiment
+    #             }
+    #         r = requests.post(url = BASE_URL+"/comments", data = data)
     r = requests.get(url= BASE_URL + "/id/" + id)
+    # if(r.status_code == 200):
+    #     continue
     sentiment = s.analyze_sentiment(text)
+    # print(score)
     data = {
         "comment_id" : id,
         "comment_date" : time,
-        "ticker" : ticker,
-        "parent_post" : parent_post,
-        "parent_comment" : parent_comment,
+        "ticker" : "TEST",
+        "parent_post" : parent,
         "body" : text,
         "score" : score,
-        "sentiment" : sentiment,
-        "author" : author   
+        "sentiment" : sentiment
         }
     r = requests.post(url = BASE_URL+"/comments", data = data)
