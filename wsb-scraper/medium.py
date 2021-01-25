@@ -74,6 +74,7 @@ def addComment(comment):
         time = comment['created_utc']
         score = comment['score']
         parent_post = comment['link_id']
+        parent_post = parent_post[3:]
         parent_comment = "t_0 " if comment['parent_id'] == parent_post else comment['parent_id']
         # if parent_post.startswith("t"):
         #     parent_post = parent_post[3:]
@@ -81,6 +82,7 @@ def addComment(comment):
     else: 
         text = comment.body
         time = comment.created_utc
+        time = str(time).rstrip('.0')
         id = comment.id
         score = comment.score
         parent_post = comment.link_id[3:]
@@ -89,8 +91,9 @@ def addComment(comment):
         author = comment.author
         # awards = item.all_awardings
     ticker = s.findTicker(text)
-    r = requests.get(url= BASE_URL + "/id/" + id)
-    sentiment = s.analyze_sentiment(text)
+    # r = requests.get(url= BASE_URL + "/id/" + id)
+    # sentiment = s.analyze_sentiment(text)
+    sentiment = "Todo"
     data = {
         "comment_id" : id,
         "comment_date" : time,

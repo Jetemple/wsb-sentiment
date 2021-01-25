@@ -27,7 +27,7 @@ Post.create = (newPost, result) => {
       return;
     }
 
-    console.log("created comment: ", { id: res.insertId, ...newPost });
+    console.log("created post: ", { id: res.insertId, ...newPost });
     result(null, { id: res.insertId, ...newPost });
   });
 };

@@ -43,6 +43,7 @@ def crawl_subreddit(subreddit):
             m.addPost(submission)
             if (submission.num_comments > 999):
                 large_threads.append(submission.id)
+                print("LARGE THREAD ALERT")
                 continue    
             submission.comments.replace_more(limit=999)
             for comment in submission.comments.list():
@@ -65,62 +66,45 @@ def crawl_subreddit(subreddit):
 
             # except Exception as e:
             #     print(e)
-            
+        print("=============================RUNNING LARGE THREAD LOOP================================")
+        # largeLoop(large_threads)
         return last_time
     except Exception as e:
         print(e)
         pass
 
 
-def getLargeThread(threadId, cutoff):
-    url = "jq4o82"
-    print(url)
-    
-    if (cutoff != 0):
-        url = str(url) + "&before="+str(cutoff)
-    # print(url)
-    r = requests.get(url)
-    # print(r)
-    data = r.json()
-    count = 0
-    for d in data['data']:
-        # print(d['id'])
-        m.addComment(d)
-        count += 1
-        cutoff = d['created_utc']
-    if(count == 20000):
-        return cutoff
-    return -1
-
-# May Be depricated
-def getPushshift(thread):
-    try:
-        url = "https://api.pushshift.io/reddit/comment/search/?link_id="+thread+"&limit=100000"
+def getPushshift(threadId):
+    # url = "jq4o82"
+    cutoff = 0
+    while(True):
+        url = "https://api.pushshift.io/reddit/comment/search/?link_id="+threadId+"&limit=100000"
+        if (cutoff != 0):
+            url = str(url) + "&before="+str(cutoff)
         print(url)
         r = requests.get(url)
+        # print(r)
         data = r.json()
+        count = 0
         for d in data['data']:
-            a = time.time()
+            print("working")
+            # print(d['id'])
             m.addComment(d)
-            print(time.time()-a)
-    except Exception as e:
-        print(e)
-
+            count += 1
+            cutoff = d['created_utc']
+        if(count != 20000):
+            return
+    return 
 
 def largeLoop(large_threads):
     print("Start Large Threads")
     for t in large_threads:
-        print(t)
-        cutoff = 0
-        while(cutoff != -1):
-            cutoff = getLargeThread(t,cutoff)
+        getPushshift(t)
 
-def getHistory(pickup):
-    utc=time.time()-172800 #Pushift.io collects comment data on posts older than 48 hours 
-    # utc=1588197864.2323
-    # utc=pickup
+def getHistory():
+    utc=time.time()-(60 * 60 * 72) #Pushift.io collects comment data on posts older than 48 hours 
     a=utc
-    dif = utc - 31557600
+    dif = utc - (60 * 60 * 24 * 30)
     # dif = utc - (60*60*24*7)
     print(dif)
     print(utc)
@@ -134,7 +118,6 @@ def getHistory(pickup):
             # print(url)
             data = r.json()
             for d in data['data']:
-                cutoff = 0
                 if(d.get('removed_by_category')==None):
                     m.addPost(d)
                     # large_threads.append(d.get('id'))
